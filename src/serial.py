@@ -33,6 +33,9 @@ def qr_algorithm(A, eps=1e-12, max_iter=1000):
     return eigenvalues, V
 
 def lanczos_algorithm(A, k):
+    """
+    Compute eigen values and eigen vectors of Laplacian Matrix. 
+    """
     n = A.shape[0]
     V = np.zeros((n, k))
     T = np.zeros((k, k))
@@ -45,10 +48,10 @@ def lanczos_algorithm(A, k):
         if(beta[j] != 0):
             v = w / beta[j]
         else:
-            v = np.random.randn(n)
             v = v / np.linalg.norm(v)
         V[:, j] = v
         w_p = A @ v
+        
         alpha[j] = np.dot(w_p.transpose(), v)
         w = w_p - alpha[j] * V[:, j] - beta[j] * V[:, j-1]
 
@@ -75,14 +78,14 @@ def lanczos_algorithm(A, k):
 
 
 # Create a random symmetric matrix
-size = 10  # matrix dimension
+size = 5  # matrix dimension
 adj = np.random.randint(2, size=(size, size))  # random binary matrix
 adj = np.triu(adj, 1) + np.triu(adj, 1).T  # make symmetric
 diag = np.diag(np.sum(adj, axis=1))  # create degree matrix
 lap = diag - adj # create Laplacian matrix
 
 evals, evecs = np.linalg.eigh(lap)
-print(evals)
+# print(evals)
 # print(evecs)
 
 eigvals, eigvecs = lanczos_algorithm(lap, size)
@@ -114,8 +117,8 @@ for i in range(lap_div_2.shape[0]):
     val = np.sum(lap_div_2[:, i])
     lap_div_2[i][i] = -1 * (val - lap_div_2[i][i])
 
-print("Original Laplacian matrix:\n", lap, "\n")
-print("1st set of nodes:\n", nodes_set_1, "\n")
-print("1st divided Laplacian matrix:\n", lap_div_1, "\n")
-print("2nd set of nodes:\n", nodes_set_2, "\n")
-print("2nd divided Laplacian matrix:\n", lap_div_2, "\n")
+# print("Original Laplacian matrix:\n", lap, "\n")
+# print("1st set of nodes:\n", nodes_set_1, "\n")
+# print("1st divided Laplacian matrix:\n", lap_div_1, "\n")
+# print("2nd set of nodes:\n", nodes_set_2, "\n")
+# print("2nd divided Laplacian matrix:\n", lap_div_2, "\n")
