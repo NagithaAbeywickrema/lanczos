@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 void create_lap(double *lap, const int SIZE);
 void lanczos_aux(double *V, double *T, double *alpha, double *beta, double *v,

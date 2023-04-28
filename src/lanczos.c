@@ -1,12 +1,14 @@
 #include "lanczos.h"
 
 #define MAX 1000000
+#define EPS 1e-12
+#define MAX_ITER 100000
 
 void create_lap(double *lap, const int SIZE) {
   // Create random binary matrix
   double adj[SIZE * SIZE];
   for (unsigned i = 0; i < SIZE * SIZE; i++) {
-    adj[i] = ((double)rand() / (RAND_MAX) < 0.5) ? 0 : 1;
+    adj[i] = rand() % 2;
   }
   // Make matrix symmetric
   for (unsigned i = 0; i < SIZE; i++)
@@ -16,15 +18,28 @@ void create_lap(double *lap, const int SIZE) {
   // Create degree matrix
   double diag[SIZE * SIZE];
   for (unsigned i = 0; i < SIZE; i++) {
-    int sum = 0;
-    for (unsigned j = 0; j < SIZE; j++)
+    double sum = 0;
+    for (unsigned j = 0; j < SIZE; j++) {
+      diag[i * SIZE + j] = 0;
       sum += adj[i * SIZE + j];
+    }
     diag[i * SIZE + i] = sum;
   }
 
   // Create Laplacian matrix
   for (unsigned i = 0; i < SIZE * SIZE; i++)
     lap[i] = diag[i] - adj[i];
+}
+
+void create_identity_matrix(double *out, const int SIZE) {
+  for (unsigned i = 0; i < SIZE; i++) {
+    for (unsigned j = 0; j < SIZE; j++) {
+      if (i == j)
+        out[i * SIZE + j] = 1;
+      else
+        out[i * SIZE + j] = 0;
+    }
+  }
 }
 
 void lanczos_aux(double *V, double *T, double *alpha, double *beta, double *v,
@@ -61,13 +76,69 @@ void matrix_mul(double *A, double *B, double *out, const int height_a,
     }
   }
 }
+
 double matrix_dot(double *v, double *w, const int SIZE) {}
+
 void w_calc(double *w, double alpha, int j, double *V, double beta,
             const int SIZE) {}
+
 double norm(double *w, const int SIZE) {}
+
 void w_modify(double *w, double beta, double *v, const int SIZE) {}
+
 void update_v(double *v, double *V, int j, const int SIZE) {}
+
 void make_tri(double *alpha, double *beta, double *T, const int M) {}
+
+void qr_algorithm(double *T, const int SIZE, double *eigvals, double *eigvecs) {
+
+  double *Q = (double *)calloc(SIZE * SIZE, sizeof(double));
+  double *R = (double *)calloc(SIZE * SIZE, sizeof(double));
+  create_identity_matrix(eigvecs, SIZE);
+
+
+  for (unsigned i = 0; i < MAX_ITER; i++) {
+    for (unsigned j = 0; j < SIZE; j++) {
+      for (unsigned t = 0; t < SIZE; t++) {
+        Q[j + SIZE * t] = T[j + SIZE * t];
+      }
+      for (unsigned k = 0; k < j; k++) {
+        double dot = 0;
+        for (unsigned t = 0; t < SIZE; t++) {
+          dot += Q[k + SIZE * t] * T[j + SIZE * t];
+        }
+        R[k * SIZE + j] = dot;
+        for (unsigned t = 0; t < SIZE; t++) {
+          Q[j + SIZE * t] -= R[k * SIZE + j] * Q[k + SIZE * t];
+        }
+      }
+
+      double total = 0;
+      for (unsigned t = 0; t < SIZE; t++) {
+        total += Q[j + SIZE * t] * Q[j + SIZE * t];
+      }
+      R[j * SIZE + j] = sqrt(total); // norm(temp_q, SIZE);
+
+      for (unsigned t = 0; t < SIZE; t++)
+        Q[j + SIZE * t] = Q[j + SIZE * t] / R[j * SIZE + j];
+       
+    }
+
+    matrix_mul(R, Q, T, SIZE, SIZE, SIZE);
+    matrix_mul(eigvecs, Q, eigvecs, SIZE, SIZE, SIZE);
+    
+    double subdiag = 0;
+    for (unsigned k = 0; k < SIZE; k++) {
+      if (subdiag < abs(T[k * SIZE + k]))
+        subdiag = abs(T[k * SIZE + k]);
+    }
+    if (subdiag < EPS)
+      break;
+  }
+  for (unsigned j = 0; j < SIZE; j++) {
+    eigvals[j] = T[j * SIZE + j];
+  }
+}
 
 void lanczos(double *lap, const int SIZE, const int M, double *V, double *T,
              double *alpha, double *beta, double *v, double *eigvals,
@@ -103,4 +174,5 @@ void lanczos(double *lap, const int SIZE, const int M, double *V, double *T,
 
   // Make triadiagonal matrix
   make_tri(alpha, beta, T, M);
+  qr_algorithm(T, SIZE, eigvals, eigvecs);
 }
