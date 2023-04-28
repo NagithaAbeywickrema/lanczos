@@ -1,0 +1,7 @@
+# Exclude build directory
+build
+
+# Project files
+.vscode
+.idea
+cmake-build-debug
