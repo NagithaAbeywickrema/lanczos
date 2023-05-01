@@ -1,8 +1,9 @@
 #include "lanczos.h"
 
 int main(int argc, char *argv[]) {
-  const int SIZE = 5;
+  const int SIZE = 30;
   const int M = SIZE; // TODO: replace M with SIZE?
+#pragma nomp init(argc, argv)
 
   // Create Laplacian matrix
   double *lap = (double *)calloc(SIZE * SIZE, sizeof(double));
