@@ -4,34 +4,6 @@
 #define EPS 1e-12
 #define MAX_ITER 100000
 
-void create_lap(double *lap, const int SIZE) {
-  // Create random binary matrix
-  double adj[SIZE * SIZE];
-  for (unsigned i = 0; i < SIZE * SIZE; i++) {
-    adj[i] = rand() % 2;
-  }
-
-  // Make matrix symmetric
-  for (unsigned i = 0; i < SIZE; i++)
-    for (unsigned j = i + 1; j < SIZE; j++)
-      adj[i * SIZE + j] = adj[j * SIZE + i];
-
-  // Create degree matrix
-  double diag[SIZE * SIZE];
-  for (unsigned i = 0; i < SIZE; i++) {
-    double sum = 0;
-    for (unsigned j = 0; j < SIZE; j++) {
-      diag[i * SIZE + j] = 0;
-      sum += adj[i * SIZE + j];
-    }
-    diag[i * SIZE + i] = sum;
-  }
-
-  // Create Laplacian matrix
-  for (unsigned i = 0; i < SIZE * SIZE; i++)
-    lap[i] = diag[i] - adj[i];
-}
-
 void create_identity_matrix(double *out, const int SIZE) {
   for (unsigned i = 0; i < SIZE; i++) {
     for (unsigned j = 0; j < SIZE; j++) {
@@ -151,26 +123,9 @@ void qr_algorithm(double *T, const int SIZE, double *eigvals, double *eigvecs) {
   }
 }
 
-void print_eigen_vals(double *eigen_vals, const int SIZE) {
-  printf("eigen_vals\n");
-  for (unsigned i = 0; i < SIZE; i++) {
-    printf("%f\n", eigen_vals[i]);
-  }
-}
-
-void print_matrix(double *matrix, const int SIZE1, const int SIZE2) {
-  printf("Matrix\n");
-  for (unsigned i = 0; i < SIZE1; i++) {
-    for (unsigned j = 0; j < SIZE2; j++) {
-      printf("%f ", matrix[i * SIZE1 + j]);
-    }
-    printf("\n");
-  }
-}
-
 void lanczos(double *lap, const int SIZE, const int M, double *eigvals,
-             double *eigvecs) {
-  print_matrix(lap, SIZE, SIZE);
+             double *eigvecs, int argc, char *argv[]) {
+  // print_matrix(lap, SIZE, SIZE);
 
   // Allocate memory
   double *V = (double *)calloc(SIZE * M, sizeof(double));
