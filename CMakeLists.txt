@@ -3,11 +3,12 @@ project(
   rsb
   VERSION 0.0.1
   DESCRIPTION "RSB"
-  LANGUAGES C)
+  LANGUAGES C CXX)
 
 option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
+option(ENABLE_SYCL "Build rsb SYCL" OFF)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -53,4 +54,11 @@ if (ENABLE_CUDA)
     src/kernels-cuda.cu)
     add_executable(rsb-cuda ${SOURCES})
     target_link_libraries(rsb-cuda PRIVATE m)
+endif()
+
+if (ENABLE_SYCL)
+    set(SOURCES src/sycl/main.cpp src/sycl/lanczos-sycl.cpp src/sycl/lanczos.h)
+    add_executable(rsb_sycl ${SOURCES})
+    find_package(IntelDPCPP REQUIRED)
+    target_link_libraries(rsb_sycl PRIVATE m -fsycl)
 endif()
