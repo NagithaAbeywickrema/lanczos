@@ -1,26 +1,26 @@
 #include "lanczos.h"
-
-void create_lap(double *lap, const int SIZE) {
+#define SIZE 5
+void create_lap(double *lap, const int size) {
   // Create random binary matrix
-  double adj[SIZE * SIZE];
-  for (unsigned i = 0; i < SIZE * SIZE; i++) {
+  double adj[size * size];
+  for (unsigned i = 0; i < size * size; i++) {
     adj[i] = rand() % 2;
   }
 
   // Make matrix symmetric
-  for (unsigned i = 0; i < SIZE; i++)
-    for (unsigned j = i + 1; j < SIZE; j++)
-      adj[i * SIZE + j] = adj[j * SIZE + i];
+  for (unsigned i = 0; i < size; i++)
+    for (unsigned j = i + 1; j < size; j++)
+      adj[i * size + j] = adj[j * size + i];
 
   // Create degree matrix
-  double diag[SIZE * SIZE];
-  for (unsigned i = 0; i < SIZE; i++) {
+  double diag[size * size];
+  for (unsigned i = 0; i < size; i++) {
     double sum = 0;
-    for (unsigned j = 0; j < SIZE; j++) {
-      diag[i * SIZE + j] = 0;
-      sum += adj[i * SIZE + j];
+    for (unsigned j = 0; j < size; j++) {
+      diag[i * size + j] = 0;
+      sum += adj[i * size + j];
     }
-    diag[i * SIZE + i] = sum;
+    diag[i * size + i] = sum;
   }
 
   // Create Laplacian matrix
@@ -29,7 +29,6 @@ void create_lap(double *lap, const int SIZE) {
 }
 
 int main(int argc, char *argv[]) {
-  const int SIZE = 30;
   const int M = SIZE; // TODO: replace M with SIZE?
 
   // Create Laplacian matrix
