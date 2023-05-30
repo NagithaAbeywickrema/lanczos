@@ -1,3 +1,4 @@
+#include "lanczos-aux.h"
 #include "lanczos.h"
 
 #define MAX 1000000
@@ -56,6 +57,17 @@ void mtx_mul(double *A, double *B, double *out, const int height_a,
   }
 }
 
+void mtx_vec_mul(double *A, double *B, double *out, const int height_a,
+                 const int width_a) {
+
+  for (unsigned i = 0; i < height_a; i++) {
+    double dot = 0;
+    for (unsigned k = 0; k < width_a; k++)
+      dot += A[i * width_a + k] * B[k];
+    out[i] = dot;
+  }
+}
+
 double mtx_dot(double *v, double *w, const int SIZE) {
   double dot = 0;
   for (unsigned i = 0; i < SIZE; i++)
@@ -82,9 +94,7 @@ void calc_w(double *w, double *alpha, double *V, double *beta, unsigned i,
 }
 
 double mtx_norm(double *w, const int SIZE) {
-  double total = 0;
-  for (unsigned i = 0; i < SIZE; i++)
-    total += w[i] * w[i];
+  double total = mtx_dot(w, w, SIZE);
   return sqrt(total);
 }
 
@@ -100,54 +110,6 @@ void make_tri(double *alpha, double *beta, double *T, const int M) {
       T[i * M + i + 1] = beta[i + 1];
       T[(i + 1) * M + i] = beta[i + 1];
     }
-  }
-}
-
-void qr_algorithm(double *T, const int SIZE, double *eigvals, double *eigvecs) {
-
-  double *Q = (double *)calloc(SIZE * SIZE, sizeof(double));
-  double *R = (double *)calloc(SIZE * SIZE, sizeof(double));
-  create_identity_matrix(eigvecs, SIZE);
-
-  for (unsigned i = 0; i < MAX_ITER; i++) {
-    for (unsigned j = 0; j < SIZE; j++) {
-      for (unsigned t = 0; t < SIZE; t++) {
-        Q[j + SIZE * t] = T[j + SIZE * t];
-      }
-      for (unsigned k = 0; k < j; k++) {
-        double dot = 0;
-        for (unsigned t = 0; t < SIZE; t++) {
-          dot += Q[k + SIZE * t] * T[j + SIZE * t];
-        }
-        R[k * SIZE + j] = dot;
-        for (unsigned t = 0; t < SIZE; t++) {
-          Q[j + SIZE * t] -= R[k * SIZE + j] * Q[k + SIZE * t];
-        }
-      }
-
-      double total = 0;
-      for (unsigned t = 0; t < SIZE; t++) {
-        total += Q[j + SIZE * t] * Q[j + SIZE * t];
-      }
-      R[j * SIZE + j] = sqrt(total); // norm(temp_q, SIZE);
-
-      for (unsigned t = 0; t < SIZE; t++)
-        Q[j + SIZE * t] = Q[j + SIZE * t] / R[j * SIZE + j];
-    }
-
-    mtx_mul(R, Q, T, SIZE, SIZE, SIZE);
-    mtx_mul(eigvecs, Q, eigvecs, SIZE, SIZE, SIZE);
-
-    double subdiag = 0;
-    for (unsigned k = 0; k < SIZE; k++) {
-      if (subdiag < abs(T[k * SIZE + k]))
-        subdiag = abs(T[k * SIZE + k]);
-    }
-    if (subdiag < EPS)
-      break;
-  }
-  for (unsigned j = 0; j < SIZE; j++) {
-    eigvals[j] = T[j * SIZE + j];
   }
 }
 
@@ -199,7 +161,7 @@ void lanczos(double *lap, const int SIZE, const int M, double *eigvals,
 
     mtx_col_copy(v, V, i, SIZE);
 
-    mtx_mul(lap, v, w, SIZE, SIZE, 1);
+    mtx_vec_mul(lap, v, w, SIZE, SIZE);
 
     alpha[i] = mtx_dot(v, w, SIZE);
 
@@ -210,8 +172,7 @@ void lanczos(double *lap, const int SIZE, const int M, double *eigvals,
     }
   }
 
-  // Make triadiagonal matrix
-  make_tri(alpha, beta, T, M);
-  qr_algorithm(T, SIZE, eigvals, eigvecs);
+  tqli(eigvecs, eigvals, SIZE, alpha, beta, 0);
+  // not sorted
   print_eigen_vals(eigvals, SIZE);
 }
