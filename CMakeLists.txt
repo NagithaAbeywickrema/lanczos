@@ -57,7 +57,16 @@ if (ENABLE_CUDA)
 endif()
 
 if (ENABLE_SYCL)
-    set(SOURCES src/sycl/main.cpp src/sycl/lanczos-sycl.cpp src/sycl/lanczos.h)
+    set(SOURCES 
+    src/main.c 
+    src/lanczos-sycl.cpp 
+    src/lanczos-aux.c 
+    src/print-helper.c
+    src/lanczos-aux.h
+    src/lanczos.h 
+    src/print-helper.h
+    src/kernels.h
+    src/kernels-sycl.cpp)
     add_executable(rsb_sycl ${SOURCES})
     find_package(IntelDPCPP REQUIRED)
     target_link_libraries(rsb_sycl PRIVATE m -fsycl)
