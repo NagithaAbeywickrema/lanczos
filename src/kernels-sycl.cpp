@@ -1,16 +1,5 @@
 #include "kernels.h"
 
-void sycl_mtx_identity(double *out, const int size) {
-  for (unsigned i = 0; i < size; i++) {
-    for (unsigned j = 0; j < size; j++) {
-      if (i == j)
-        out[i * size + j] = 1;
-      else
-        out[i * size + j] = 0;
-    }
-  }
-}
-
 void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
                       sycl::buffer<double> out_buf, const int height_a,
                       const int width_a, sycl::queue queue) {

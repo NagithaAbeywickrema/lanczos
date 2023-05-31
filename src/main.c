@@ -40,6 +40,8 @@ int main(int argc, char *argv[]) {
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
 
   lanczos(lap, SIZE, M, eigvals, eigvecs, argc, argv);
+  // print_eigen_vals(eigvals, SIZE);
+  free(lap), free(eigvals), free(eigvecs);
 
   free(lap), free(eigvals), free(eigvecs);
 

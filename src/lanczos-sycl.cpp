@@ -1,7 +1,6 @@
+#include "kernels.h"
 #include "lanczos-aux.h"
 #include "lanczos.h"
-#include "print-helper.h"
-#include "kernels.h"
 
 #define MAX 1000000
 #define EPS 1e-12
@@ -17,24 +16,19 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
 
   // Allocate memory
   double *V = (double *)calloc(size * M, sizeof(double));
-  double *T = (double *)calloc(M * M, sizeof(double));
   double *alpha = (double *)calloc(M, sizeof(double));
   double *beta = (double *)calloc(M, sizeof(double));
   double *v = (double *)calloc(size, sizeof(double));
   double *w = (double *)calloc(size, sizeof(double));
-
-  // Initialize host memory
-  for (unsigned i = 0; i < size; i++)
-    w[i] = 0;
 
   sycl::buffer lap_buf{lap, sycl::range<1>(size * size)};
   sycl::buffer v_buf{V, sycl::range<1>(size * M)};
   sycl::buffer v_temp_buf{v, sycl::range<1>(size)};
   sycl::buffer T_buf{lap, sycl::range<1>(M * M)};
   sycl::buffer w_buf{w, sycl::range<1>(size)};
-  // sycl::buffer alpha_buf{alpha, sycl::range<1>(M)};
-  // sycl::buffer beta_buf{beta, sycl::range<1>(M)};
+
   // Lanczos iteration
+  clock_t t = clock();
   for (unsigned i = 0; i < M; i++) {
     beta[i] = sycl_mtx_norm(w_buf, size, queue);
 
@@ -62,9 +56,14 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
       sycl_calc_w(w_buf, alpha_buf, v_buf, beta_buf, i, size, queue);
     }
   }
-  tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  print_eigen_vals(eigvals, size);
 
-  free(lap), free(eigvals), free(eigvecs), free(V), free(T), free(alpha),
-      free(beta), free(v), free(w);
+  t = clock() - t;
+  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
+
+  tqli(eigvecs, eigvals, size, alpha, beta, 0);
+
+  w_buf.get_access<sycl::access::mode::read>();
+  v_temp_buf.get_access<sycl::access::mode::read>();
+
+  free(V), free(alpha), free(beta), free(v), free(w);
 }

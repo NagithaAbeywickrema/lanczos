@@ -61,7 +61,6 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
                       const int width_a, sycl::queue queue);
 double sycl_mtx_dot(sycl::buffer<double> v_buf, sycl::buffer<double> w_buf,
                     const int size, sycl::queue queue);
-void sycl_mtx_identity(double *out, const int size);
 void sycl_calc_w_init(sycl::buffer<double> w_buf,
                       sycl::buffer<double> alpha_buf,
                       sycl::buffer<double> v_buf, unsigned i, const int size,
