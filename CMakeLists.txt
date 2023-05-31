@@ -9,8 +9,15 @@ option(ENABLE_SERIAL "Build rsb serial" ON)
 option(ENABLE_NOMP "Build rsb nomp" OFF)
 
 if(ENABLE_SERIAL)
-  set(SOURCES src/main.c src/lanczos-serial.c src/print-helper.c
-              src/lanczos-aux.c src/lanczos.h src/lanczos-aux.h src/kernels.h src/kernels-serial.c)
+  set(SOURCES
+      src/main.c
+      src/lanczos-serial.c
+      src/print-helper.c
+      src/lanczos-aux.c
+      src/lanczos.h
+      src/lanczos-aux.h
+      src/kernels.h
+      src/kernels-serial.c)
   add_executable(rsb_serial ${SOURCES})
   target_link_libraries(rsb_serial PRIVATE m)
 endif()
