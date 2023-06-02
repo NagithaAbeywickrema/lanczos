@@ -46,6 +46,7 @@ def lanczos_algorithm(A, k):
     for j in range(k): 
         beta[j] = np.linalg.norm(w)
         if(beta[j] != 0):
+            v = np.random.randn(n)
             v = w / beta[j]
         else:
             v = v / np.linalg.norm(v)
