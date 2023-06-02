@@ -7,6 +7,7 @@ project(
 
 option(ENABLE_SERIAL "Build rsb serial" ON)
 option(ENABLE_NOMP "Build rsb nomp" OFF)
+option(ENABLE_CUDA "Build rsb cuda" ON)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -34,4 +35,20 @@ if(ENABLE_NOMP)
       src/print-helper.h)
   add_executable(rsb_nomp ${SOURCES})
   target_link_libraries(rsb_nomp PRIVATE m)
+endif()
+
+if (ENABLE_CUDA)
+    enable_language(CUDA)
+    set(SOURCES 
+    src/main.c
+    src/lanczos.h
+    src/lanczos-cuda.cu
+    src/lanczos-aux.h
+    src/lanczos-aux.c
+    src/print-helper.h
+    src/print-helper.c
+    src/kernels.h
+    src/kernels-cuda.cu)
+    add_executable(rsb_cuda ${SOURCES}) #TODO:change file name
+    target_link_libraries(rsb_cuda PRIVATE m)
 endif()
