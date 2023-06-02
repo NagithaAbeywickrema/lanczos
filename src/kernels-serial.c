@@ -24,7 +24,7 @@ void mtx_vec_mul(double *A, double *B, double *out, const int height_a,
   }
 }
 
-double mtx_dot(double *v, double *w, const int size) {
+double vec_dot(double *v, double *w, const int size) {
   double dot = 0;
   for (unsigned i = 0; i < size; i++)
     dot += v[i] * w[i];
@@ -49,7 +49,7 @@ void calc_w(double *w, double alpha, double *V, double beta, unsigned i,
   }
 }
 
-double mtx_norm(double *w, const int size) {
+double vec_norm(double *w, const int size) {
   double total = 0;
   for (unsigned i = 0; i < size; i++)
     total += w[i] * w[i];
