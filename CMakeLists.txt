@@ -5,36 +5,38 @@ project(
   DESCRIPTION "RSB"
   LANGUAGES C)
 
-option(ENABLE_SERIAL "Build rsb serial" ON)
-option(ENABLE_NOMP "Build rsb nomp" OFF)
-option(ENABLE_CUDA "Build rsb cuda" ON)
+option(ENABLE_SERIAL "Build RSB Serial" ON)
+option(ENABLE_NOMP "Build RSB Nomp" OFF)
+option(ENABLE_CUDA "Build RSB Cuda" OFF)
 
 if(ENABLE_SERIAL)
   set(SOURCES
       src/main.c
-      src/lanczos-serial.c
-      src/print-helper.c
-      src/lanczos-aux.c
       src/lanczos.h
+      src/lanczos-serial.c
+      src/print-helper.h
+      src/print-helper.c
       src/lanczos-aux.h
+      src/lanczos-aux.c
       src/kernels.h
       src/kernels-serial.c)
-  add_executable(rsb_serial ${SOURCES})
-  target_link_libraries(rsb_serial PRIVATE m)
+  add_executable(rsb-serial ${SOURCES})
+  target_link_libraries(rsb-serial PRIVATE m)
 endif()
 
 if(ENABLE_NOMP)
   set(SOURCES
       src/main.c
-      src/lanczos-nomp.c
-      src/lanczos-aux.c
-      src/print-helper.c
-      src/kernels-nomp.c
       src/lanczos.h
+      src/lanczos-nomp.c
+      src/lanczos-aux.h
+      src/lanczos-aux.c
+      src/print-helper.h
+      src/print-helper.c
       src/kernels.h
-      src/print-helper.h)
-  add_executable(rsb_nomp ${SOURCES})
-  target_link_libraries(rsb_nomp PRIVATE m)
+      src/kernels-nomp.c)
+  add_executable(rsb-nomp ${SOURCES})
+  target_link_libraries(rsb-nomp PRIVATE m)
 endif()
 
 if (ENABLE_CUDA)
@@ -49,6 +51,6 @@ if (ENABLE_CUDA)
     src/print-helper.c
     src/kernels.h
     src/kernels-cuda.cu)
-    add_executable(rsb_cuda ${SOURCES}) #TODO:change file name
-    target_link_libraries(rsb_cuda PRIVATE m)
+    add_executable(rsb-cuda ${SOURCES})
+    target_link_libraries(rsb-cuda PRIVATE m)
 endif()
