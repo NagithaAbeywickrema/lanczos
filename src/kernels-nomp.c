@@ -26,7 +26,7 @@ void nomp_mtx_vec_mul(double *a, double *b, double *out, const int h_a,
 #pragma nomp sync
 }
 
-double nomp_mtx_dot(double *v, double *w, const unsigned size) {
+double nomp_vec_dot(double *v, double *w, const unsigned size) {
   double prod[1] = {0};
 #pragma nomp for reduce("prod", "+")
   for (unsigned i = 0; i < size; i++)
@@ -35,21 +35,9 @@ double nomp_mtx_dot(double *v, double *w, const unsigned size) {
   return prod[0];
 }
 
-double nomp_mtx_norm(double *w, const unsigned size) {
-  double prod = nomp_mtx_dot(w, w, size);
+double nomp_vec_norm(double *w, const unsigned size) {
+  double prod = nomp_vec_dot(w, w, size);
   return sqrt(prod);
-}
-
-void nomp_mtx_identity(double *out, const int size) {
-#pragma nomp for transform("transforms", "identity_mtx")
-  for (unsigned i = 0; i < size; i++) {
-    for (unsigned j = 0; j < size; j++) {
-      if (i == j)
-        out[i * size + j] = 1;
-      else
-        out[i * size + j] = 0;
-    }
-  }
 }
 
 void nomp_calc_w_int(double *w, double alpha, double *V, unsigned i,

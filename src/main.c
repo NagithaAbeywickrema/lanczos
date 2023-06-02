@@ -38,7 +38,10 @@ int main(int argc, char *argv[]) {
   // Run Lanczos algorithm
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
+
   lanczos(lap, SIZE, M, eigvals, eigvecs, argc, argv);
+
+  free(lap), free(eigvals), free(eigvecs);
 
   return 0;
 }
