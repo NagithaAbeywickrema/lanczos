@@ -1,8 +1,8 @@
 #include "lanczos.h"
-#define SIZE 5
+#define SIZE 500
 void create_lap(double *lap, const unsigned size) {
   // Create random binary matrix
-  double adj[size * size];
+  double *adj = (double *)calloc(SIZE * SIZE, sizeof(double));
   for (unsigned i = 0; i < size * size; i++) {
     adj[i] = rand() % 2;
   }
@@ -13,7 +13,7 @@ void create_lap(double *lap, const unsigned size) {
       adj[i * size + j] = adj[j * size + i];
 
   // Create degree matrix
-  double diag[size * size];
+  double *diag = (double *)calloc(SIZE * SIZE, sizeof(double));
   for (unsigned i = 0; i < size; i++) {
     double sum = 0;
     for (unsigned j = 0; j < size; j++) {
@@ -26,6 +26,7 @@ void create_lap(double *lap, const unsigned size) {
   // Create Laplacian matrix
   for (unsigned i = 0; i < SIZE * SIZE; i++)
     lap[i] = diag[i] - adj[i];
+  free(adj), free(diag);
 }
 
 int main(int argc, char *argv[]) {
@@ -40,8 +41,6 @@ int main(int argc, char *argv[]) {
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
 
   lanczos(lap, SIZE, M, eigvals, eigvecs, argc, argv);
-  // print_eigen_vals(eigvals, SIZE);
-  free(lap), free(eigvals), free(eigvecs);
 
   free(lap), free(eigvals), free(eigvecs);
 

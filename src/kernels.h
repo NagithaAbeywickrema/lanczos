@@ -1,4 +1,4 @@
-#if defined(ENABLE_SYCL)    
+#if defined(ENABLE_SYCL)
 #include <CL/sycl.hpp>
 #endif
 #ifdef __cplusplus
@@ -50,7 +50,7 @@ void cuda_calc_w(double *d_w_vec, const double alpha, double *d_orth_mtx,
                  const double beta, const unsigned col_index,
                  const unsigned size);
 
-#if defined(ENABLE_SYCL)    
+#if defined(ENABLE_SYCL)
 
 double sycl_mtx_norm(sycl::buffer<double> w, const int size, sycl::queue queue);
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
@@ -64,13 +64,12 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
                       const int width_a, sycl::queue queue);
 double sycl_mtx_dot(sycl::buffer<double> v_buf, sycl::buffer<double> w_buf,
                     const int size, sycl::queue queue);
-void sycl_calc_w_init(sycl::buffer<double> w_buf,
-                      sycl::buffer<double> alpha_buf,
+void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
                       sycl::buffer<double> v_buf, unsigned i, const int size,
                       sycl::queue queue);
-void sycl_calc_w(sycl::buffer<double> w_buf, sycl::buffer<double> alpha_buf,
-                 sycl::buffer<double> v_buf, sycl::buffer<double> beta_buf,
-                 unsigned i, const int size, sycl::queue queue);
+void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
+                 sycl::buffer<double> v_buf, double beta, unsigned i,
+                 const int size, sycl::queue queue);
 #endif
 
 #ifdef __cplusplus

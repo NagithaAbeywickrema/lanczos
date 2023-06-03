@@ -67,8 +67,8 @@ if (ENABLE_SYCL)
     src/print-helper.h
     src/kernels.h
     src/kernels-sycl.cpp)
-    add_executable(rsb_sycl ${SOURCES})
+    add_executable(rsb-sycl ${SOURCES})
     find_package(IntelDPCPP REQUIRED)
-    target_link_libraries(rsb_sycl PRIVATE m -fsycl)
-    target_compile_definitions(rsb_sycl PRIVATE ENABLE_SYCL)
+    target_link_libraries(rsb-sycl PRIVATE m -fsycl)
+    target_compile_definitions(rsb-sycl PRIVATE ENABLE_SYCL)
 endif()
