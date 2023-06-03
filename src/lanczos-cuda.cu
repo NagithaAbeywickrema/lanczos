@@ -6,8 +6,8 @@
 #define MAX 10
 #define EPS 1e-12
 
-void lanczos(double *lap, const int size, const int m, double *eigvals,
-             double *eigvecs, int argc,
+void lanczos(double *lap, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc,
              char *argv[]) { // TODO: make const unsigned m
   // Allocate host memory
   double *alpha = (double *)calloc(m, sizeof(double));

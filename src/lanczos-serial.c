@@ -7,8 +7,8 @@
 #define EPS 1e-12
 
 void lanczos_algo(double *lap, double *alpha, double *beta, double *w,
-                  double *v, double *V, const int M, const int size) {
-  for (unsigned i = 0; i < M; i++) {
+                  double *v, double *V, const unsigned m, const unsigned size) {
+  for (unsigned i = 0; i < m; i++) {
     beta[i] = vec_norm(w, size);
 
     if (fabs(beta[i] - 0) > 1e-8) {
@@ -34,22 +34,22 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w,
   }
 }
 
-void lanczos(double *lap, const int size, const int M, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+void lanczos(double *lap, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]) {
   // print_matrix(lap, size, size);
 
   // Allocate memory
-  double *V = (double *)calloc(size * M, sizeof(double));
-  double *alpha = (double *)calloc(M, sizeof(double));
-  double *beta = (double *)calloc(M, sizeof(double));
+  double *V = (double *)calloc(size * m, sizeof(double));
+  double *alpha = (double *)calloc(m, sizeof(double));
+  double *beta = (double *)calloc(m, sizeof(double));
   double *v = (double *)calloc(size, sizeof(double));
   double *w = (double *)calloc(size, sizeof(double));
 
   for (int k = 0; k < 10; k++)
-    lanczos_algo(lap, alpha, beta, w, v, V, M, size);
+    lanczos_algo(lap, alpha, beta, w, v, V, m, size);
 
   clock_t t = clock();
-  lanczos_algo(lap, alpha, beta, w, v, V, M, size);
+  lanczos_algo(lap, alpha, beta, w, v, V, m, size);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 

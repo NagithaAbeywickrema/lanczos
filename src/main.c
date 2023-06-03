@@ -1,6 +1,6 @@
 #include "lanczos.h"
 #define SIZE 5
-void create_lap(double *lap, const int size) {
+void create_lap(double *lap, const unsigned size) {
   // Create random binary matrix
   double adj[size * size];
   for (unsigned i = 0; i < size * size; i++) {
@@ -29,7 +29,7 @@ void create_lap(double *lap, const int size) {
 }
 
 int main(int argc, char *argv[]) {
-  const int M = SIZE; // TODO: replace M with SIZE?
+  const unsigned M = SIZE;
 
   // Create Laplacian matrix
   double *lap = (double *)calloc(SIZE * SIZE, sizeof(double));
