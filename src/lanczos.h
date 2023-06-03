@@ -8,9 +8,8 @@
 extern "C" {
 #endif
 
-void create_lap(double *lap, const int size);
-void lanczos(double *lap, const int size, const int M, double *eigvals,
-             double *eigvecs, int argc, char *argv[]);
+void lanczos(double *lap, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]);
 
 #ifdef __cplusplus
 }
