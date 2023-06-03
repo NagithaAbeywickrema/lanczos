@@ -37,8 +37,6 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
 
 void lanczos(double *lap, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
-  // print_matrix(lap, size, size);
-
   // Allocate memory
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
   double *alpha = (double *)calloc(m, sizeof(double));
@@ -46,7 +44,8 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
   double *orth_vec = (double *)calloc(size, sizeof(double));
   double *w_vec = (double *)calloc(size, sizeof(double));
 
-  for (int k = 0; k < 10; k++)
+  // Warm up runs
+  for (unsigned k = 0; k < 10; k++)
     lanczos_algo(lap, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
 
   clock_t t = clock();
@@ -55,6 +54,7 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  // not sorted
   print_eigen_vals(eigvals, size);
+
+  free(orth_mtx), free(alpha), free(beta), free(orth_vec), free(w_vec);
 }
