@@ -32,32 +32,63 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
   queue.wait();
 }
 
-double sycl_mtx_dot(sycl::buffer<double> v_buf, sycl::buffer<double> w_buf,
-                    const int size, sycl::queue queue) {
-  double sumResult = 0;
-  sycl::buffer<double> sumBuf{&sumResult, 1};
+double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
+                    sycl::buffer<double> b_vec_buf, const int size,
+                    sycl::queue queue) {
+  // Number of work items in each local work group
+  size_t local_size = 256;
+
+  // Number of total work items - local_size must be devisor
+  size_t group_size = ((size + local_size - 1) / local_size);
+  size_t global_size = group_size * local_size;
+
+  double *interim_results = (double *)calloc(group_size, sizeof(double));
+  sycl::buffer result_buf{interim_results, sycl::range<1>(group_size)};
+
   queue.submit([&](sycl::handler &h) {
-    auto d_v = v_buf.get_access<sycl::access::mode::read>(h);
-    auto d_w = w_buf.get_access<sycl::access::mode::read>(h);
-    // Number of work items in each local work group
-    size_t local_size = 256;
+    auto a_vec_acc = a_vec_buf.get_access<sycl::access::mode::read>(h);
+    auto b_vec_acc = b_vec_buf.get_access<sycl::access::mode::read>(h);
+    auto result_acc = result_buf.get_access<sycl::access::mode::write>(h);
 
-    // Number of total work items - local_size must be devisor
-    size_t global_size = ((size + local_size - 1) / local_size) * local_size;
-
-    auto sumReduction = sycl::reduction(sumBuf, h, sycl::plus<>());
+    sycl::local_accessor<float, 1> shared_data(sycl::range<1>(local_size), h);
 
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
-        sumReduction, [=](auto item, auto &sum) {
-          unsigned id = item.get_global_id(0);
-          if (id < size)
-            sum += d_v[id] * d_w[id];
+        [=](auto item) {
+          const unsigned tid = item.get_global_id(0);
+
+          if (tid < size)
+            shared_data[item.get_local_id(0)] = a_vec_acc[tid] * b_vec_acc[tid];
+          else
+            shared_data[item.get_local_id(0)] = 0.0;
+
+          item.barrier(sycl::access::fence_space::local_space);
+
+          for (unsigned stride = item.get_local_range()[0] >> 1; stride > 0;
+               stride >>= 1) {
+            if (item.get_local_id(0) < stride)
+              shared_data[item.get_local_id(0)] +=
+                  shared_data[item.get_local_id(0) + stride];
+
+            item.barrier(sycl::access::fence_space::local_space);
+          }
+
+          if (item.get_local_id(0) == 0)
+            result_acc[item.get_group(0)] = shared_data[0];
         });
   });
+
   queue.wait();
-  sumBuf.get_access<sycl::access::mode::read>();
-  return sumResult;
+  result_buf.get_access<sycl::access::mode::read>();
+
+  double result = 0.0;
+  for (unsigned i = 0; i < group_size; i++) {
+    result += interim_results[i];
+  }
+
+  free(interim_results);
+
+  return result;
 }
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
                        sycl::buffer<double> out_buf, const int size,
