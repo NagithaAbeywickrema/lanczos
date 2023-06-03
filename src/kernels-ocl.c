@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
-                    cl_mem d_v, double *v_r, const int size) {
+                    cl_mem d_v, const int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -22,6 +22,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
   knl = clCreateKernel(prg, "vec_dot", &err);
   cl_mem d_v_r = clCreateBuffer(ctx, CL_MEM_WRITE_ONLY,
                                 num_blocks * sizeof(double), NULL, NULL);
+  double *v_r = (double *)calloc(num_blocks, sizeof(double));
 
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_v);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_v);
@@ -33,8 +34,8 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
                                0, NULL, NULL);
   clFinish(queue);
 
-  clEnqueueReadBuffer(queue, d_v_r, CL_TRUE, 0, sizeof(double) * local_size,
-                      v_r, 0, NULL, NULL);
+  err = clEnqueueReadBuffer(queue, d_v_r, CL_TRUE, 0,
+                            sizeof(double) * num_blocks, v_r, 0, NULL, NULL);
 
   clReleaseMemObject(d_v_r);
   clReleaseKernel(knl);
@@ -47,6 +48,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
     for (unsigned i = 0; i < num_blocks; i++) {
       total += v_r[i];
     }
+    free(v_r);
     return sqrt(total);
   }
 }
@@ -118,7 +120,7 @@ void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
-                   cl_mem d_v, cl_mem d_w, double *v_r, const int size) {
+                   cl_mem d_v, cl_mem d_w, const int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -129,6 +131,7 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
   knl = clCreateKernel(prg, "vec_dot", &err);
   cl_mem d_v_r = clCreateBuffer(ctx, CL_MEM_WRITE_ONLY,
                                 num_blocks * sizeof(double), NULL, NULL);
+  double *v_r = (double *)malloc(num_blocks * sizeof(double));
 
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_v);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_w);
@@ -140,7 +143,7 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
                                0, NULL, NULL);
   clFinish(queue);
 
-  clEnqueueReadBuffer(queue, d_v_r, CL_TRUE, 0, sizeof(double) * local_size,
+  clEnqueueReadBuffer(queue, d_v_r, CL_TRUE, 0, sizeof(double) * num_blocks,
                       v_r, 0, NULL, NULL);
   clReleaseMemObject(d_v_r);
   clReleaseKernel(knl);
@@ -152,6 +155,7 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
     double total = 0;
     for (unsigned i = 0; i < num_blocks; i++)
       total += v_r[i];
+    free(v_r);
     return total;
   }
 }

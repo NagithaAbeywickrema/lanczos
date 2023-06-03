@@ -17,11 +17,11 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
-                  double *alpha, double *beta, double *v, double *w_r,
-                  cl_mem d_lap, cl_mem d_w, cl_mem d_v, cl_mem d_V,
-                   const int M, const int size) {
+                  double *alpha, double *beta, double *v, cl_mem d_lap,
+                  cl_mem d_w, cl_mem d_v, cl_mem d_V, const int M,
+                  const int size) {
   for (unsigned i = 0; i < M; i++) {
-    beta[i] = ocl_vec_norm(ctx, queue, prg, d_w, w_r, size);
+    beta[i] = ocl_vec_norm(ctx, queue, prg, d_w, size);
     if (fabs(beta[i] - 0) > EPS) {
       ocl_mtx_sclr_div(ctx, queue, prg, d_v, d_w, beta[i], size);
     } else {
@@ -30,13 +30,13 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
       }
       cl_int err = clEnqueueWriteBuffer(
           queue, d_v, CL_TRUE, 0, size * sizeof(double), v, 0, NULL, NULL);
-      double norm_val = ocl_vec_norm(ctx, queue, prg, d_v, w_r, size);
+      double norm_val = ocl_vec_norm(ctx, queue, prg, d_v, size);
       ocl_mtx_sclr_div(ctx, queue, prg, d_v, d_v, norm_val, size);
     }
 
     ocl_mtx_col_copy(ctx, queue, prg, d_v, d_V, i, size);
     ocl_mtx_vec_mul(ctx, queue, prg, d_lap, d_v, d_w, size, size);
-    alpha[i] = ocl_vec_dot(ctx, queue, prg, d_v, d_w, w_r, size);
+    alpha[i] = ocl_vec_dot(ctx, queue, prg, d_v, d_w, size);
     if (i == 0) {
       ocl_calc_w_init(ctx, queue, prg, d_w, alpha[i], d_V, i, size);
     } else {
@@ -53,7 +53,6 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
   double *beta = (double *)calloc(M, sizeof(double));
   double *v = (double *)calloc(size, sizeof(double));
   double *w = (double *)calloc(size, sizeof(double));
-  double *w_r = (double *)malloc(size * sizeof(double));
 
   cl_context context;
   cl_command_queue queue;
@@ -128,12 +127,12 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
 
   // warm ups
   for (int t = 0; t < 10; t++)
-    lanczos_algo(context, queue, program, alpha, beta, v, w_r, d_lap, d_w, d_v,
-                 d_V, M, size);
+    lanczos_algo(context, queue, program, alpha, beta, v, d_lap, d_w, d_v, d_V,
+                 M, size);
 
   clock_t t = clock();
-  lanczos_algo(context, queue, program, alpha, beta, v, w_r, d_lap, d_w, d_v,
-               d_V, M, size);
+  lanczos_algo(context, queue, program, alpha, beta, v, d_lap, d_w, d_v, d_V, M,
+               size);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
@@ -149,5 +148,5 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
 
-  free(V), free(alpha), free(beta), free(v);
+  free(V), free(alpha), free(beta), free(v), free(w);
 }
