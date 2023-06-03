@@ -62,7 +62,7 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
-  print_eigen_vals(eigvals, size);
+  // print_eigen_vals(eigvals, size);
 
 #pragma nomp update(free                                                       \
                     : lap[0, size * size], orth_mtx[0, size * m],              \

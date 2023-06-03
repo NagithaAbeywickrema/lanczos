@@ -2,20 +2,18 @@ import loopy as lp
 
 LOOPY_LANG_VERSION = (2018, 2)
 
-
-def matrix_norm(knl, context):
-    (i,) = knl.default_entrypoint.all_inames()
-    knl = lp.split_iname(knl, i, 32)
-    knl = lp.tag_inames(
-        knl, [(f"{i}_outer", "g.0"), (f"{i}_inner", "l.0")]
+def stream_data_flow_loop(knl, context):
+    (iname,) = knl.default_entrypoint.all_inames()
+    i_inner, i_outer = f"{iname}_inner", f"{iname}_outer"
+    knl = lp.split_iname(
+        knl, iname, 32, inner_iname=i_inner, outer_iname=i_outer
     )
+    knl = lp.tag_inames(knl, {i_outer: "g.0", i_inner: "l.0"})
     return knl
 
-def matrix_mul(knl, context):
-    knl = lp.tag_inames(knl, [("i", "g.0")])
-    return knl
-
-def identity_mtx(knl, context):
-    (g0, g1) = knl.default_entrypoint.all_inames()
-    knl = lp.tag_inames(knl, [(g0, "g.0"), (g1, "g.1")])
+def mat_vec_mul(knl, context):
+    knl = lp.split_iname(
+        knl, "i", 32, inner_iname="i_inner", outer_iname="i_outer"
+    )
+    knl = lp.tag_inames(knl, {"i_outer": "g.0", "i_inner": "l.0", "k": "for"})
     return knl

@@ -54,7 +54,7 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  print_eigen_vals(eigvals, size);
+  // print_eigen_vals(eigvals, size);
 
   free(orth_mtx), free(alpha), free(beta), free(orth_vec), free(w_vec);
 }
