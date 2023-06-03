@@ -9,6 +9,7 @@ option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
 option(ENABLE_SYCL "Build rsb SYCL" OFF)
+option(ENABLE_OPENCL "Build RSB OpenCL" OFF)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -71,4 +72,19 @@ if (ENABLE_SYCL)
     find_package(IntelDPCPP REQUIRED)
     target_link_libraries(rsb-sycl PRIVATE m -fsycl)
     target_compile_definitions(rsb-sycl PRIVATE ENABLE_SYCL)
+endif()
+
+if(ENABLE_OPENCL)
+  add_executable(
+    rsb_ocl
+    src/main.c
+    src/lanczos-ocl.c
+    src/print-helper.c
+    src/lanczos-aux.c
+    src/kernels-ocl.c
+    src/lanczos.h
+    src/kernels.h
+    src/print-helper.h)
+  find_package(OpenCL REQUIRED)
+  target_link_libraries(rsb_ocl PRIVATE OpenCL::OpenCL m)
 endif()
