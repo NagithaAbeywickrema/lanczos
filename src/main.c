@@ -24,7 +24,7 @@ void create_lap(double *lap, const unsigned size) {
   }
 
   // Create Laplacian matrix
-  for (unsigned i = 0; i < SIZE * SIZE; i++)
+  for (unsigned i = 0; i < size * size; i++)
     lap[i] = diag[i] - adj[i];
   free(adj), free(diag);
 }

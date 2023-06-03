@@ -72,6 +72,25 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
                  const int size, sycl::queue queue);
 #endif
 
+// Opencl implemented parallelized functions
+double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
+                    cl_mem d_v, double *v_r, const int size);
+void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
+                      cl_mem d_v, cl_mem d_w, double sclr, const unsigned size);
+void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
+                      cl_mem d_v, cl_mem d_V, int i, unsigned size);
+void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
+                     cl_mem d_lap, cl_mem d_v, cl_mem d_w, const int h_a,
+                     const int w_a);
+double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
+                   cl_mem d_v, cl_mem d_w, double *v_r, const int SIZE);
+void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
+                     cl_mem d_w, double alpha, cl_mem d_V, unsigned i,
+                     const int size);
+void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
+                cl_mem d_w, double alpha, cl_mem d_V, double beta, unsigned i,
+                const int size);
+
 #ifdef __cplusplus
 }
 #endif
