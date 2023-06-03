@@ -6,32 +6,11 @@
 #define MAX 10
 #define EPS 1e-12
 
-void lanczos(double *lap, const unsigned size, const unsigned m,
-             double *eigvals, double *eigvecs, int argc,
-             char *argv[]) { // TODO: make const unsigned m
-  // Allocate host memory
-  double *alpha = (double *)calloc(m, sizeof(double));
-  double *beta = (double *)calloc(m, sizeof(double));
-  double *orth_vec = (double *)calloc(size, sizeof(double));
-  double *w_vec = (double *)calloc(size, sizeof(double));
-
-  // Device memory
-  double *d_lap, *d_orth_mtx, *d_orth_vec, *d_w_vec;
-
-  // Allocate device memory
-  cudaMalloc((void **)&d_lap, (size * size) * sizeof(double));
-  cudaMalloc((void **)&d_orth_mtx, (size * m) * sizeof(double));
-  cudaMalloc((void **)&d_orth_vec, (size) * sizeof(double));
-  cudaMalloc((void **)&d_w_vec, (size) * sizeof(double));
-
-  // H2D memory copy
-  cudaMemcpy(d_lap, lap, (size * size) * sizeof(double),
-             cudaMemcpyHostToDevice);
-
-  // Measure time
-  clock_t t = clock();
-  // Lanczos iteration
+void lanczos_algo(double *d_lap, double *alpha, double *beta, double *d_w_vec,
+                  double *w_vec, double *d_orth_vec, double *orth_vec,
+                  double *d_orth_mtx, const unsigned m, const unsigned size) {
   cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
+
   for (unsigned i = 0; i < m; i++) {
     beta[i] = cuda_vec_norm(d_w_vec, size);
 
@@ -58,6 +37,38 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
       cuda_calc_w(d_w_vec, alpha[i], d_orth_mtx, beta[i], i, size);
     }
   }
+}
+
+void lanczos(double *lap, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]) {
+  // Allocate host memory
+  double *alpha = (double *)calloc(m, sizeof(double));
+  double *beta = (double *)calloc(m, sizeof(double));
+  double *orth_vec = (double *)calloc(size, sizeof(double));
+  double *w_vec = (double *)calloc(size, sizeof(double));
+
+  // Device memory
+  double *d_lap, *d_orth_mtx, *d_orth_vec, *d_w_vec;
+
+  // Allocate device memory
+  cudaMalloc((void **)&d_lap, (size * size) * sizeof(double));
+  cudaMalloc((void **)&d_orth_mtx, (size * m) * sizeof(double));
+  cudaMalloc((void **)&d_orth_vec, (size) * sizeof(double));
+  cudaMalloc((void **)&d_w_vec, (size) * sizeof(double));
+
+  // H2D memory copy
+  cudaMemcpy(d_lap, lap, (size * size) * sizeof(double),
+             cudaMemcpyHostToDevice);
+
+  // Warm up runs
+  for (unsigned k = 0; k < 10; k++)
+    lanczos_algo(d_lap, alpha, beta, d_w_vec, w_vec, d_orth_vec, orth_vec,
+                 d_orth_mtx, m, size);
+
+  // Measure time
+  clock_t t = clock();
+  lanczos_algo(d_lap, alpha, beta, d_w_vec, w_vec, d_orth_vec, orth_vec,
+               d_orth_mtx, m, size);
   t = clock() - t;
 
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
