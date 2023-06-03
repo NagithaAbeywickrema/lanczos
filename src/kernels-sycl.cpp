@@ -114,14 +114,12 @@ void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
   queue.wait();
 }
 
-void sycl_calc_w_init(sycl::buffer<double> w_buf,
-                      sycl::buffer<double> alpha_buf,
+void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
                       sycl::buffer<double> v_buf, unsigned i, const int size,
                       sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
-    auto d_alpha = alpha_buf.get_access<sycl::access::mode::read>(h);
     auto d_v = v_buf.get_access<sycl::access::mode::read>(h);
     // Number of work items in each local work group
     size_t local_size = 256;
@@ -134,20 +132,18 @@ void sycl_calc_w_init(sycl::buffer<double> w_buf,
         [=](auto item) {
           unsigned id = item.get_global_id(0);
           if (id < size)
-            d_w[id] = d_w[id] - d_alpha[i] * d_v[id + size * i];
+            d_w[id] = d_w[id] - alpha * d_v[id + size * i];
         });
   });
   queue.wait();
 }
 
-void sycl_calc_w(sycl::buffer<double> w_buf, sycl::buffer<double> alpha_buf,
-                 sycl::buffer<double> v_buf, sycl::buffer<double> beta_buf,
-                 unsigned i, const int size, sycl::queue queue) {
+void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
+                 sycl::buffer<double> v_buf, double beta, unsigned i,
+                 const int size, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
-    auto d_alpha = alpha_buf.get_access<sycl::access::mode::read>(h);
-    auto d_beta = beta_buf.get_access<sycl::access::mode::read>(h);
     auto d_v = v_buf.get_access<sycl::access::mode::read>(h);
     // Number of work items in each local work group
     size_t local_size = 256;
@@ -160,8 +156,8 @@ void sycl_calc_w(sycl::buffer<double> w_buf, sycl::buffer<double> alpha_buf,
         [=](auto item) {
           unsigned id = item.get_global_id(0);
           if (id < size)
-            d_w[id] = d_w[id] - d_alpha[i] * d_v[id + size * i] -
-                      d_beta[i] * d_v[id + size * (i - 1)];
+            d_w[id] = d_w[id] - alpha * d_v[id + size * i] -
+                      beta * d_v[id + size * (i - 1)];
         });
   });
   queue.wait();
