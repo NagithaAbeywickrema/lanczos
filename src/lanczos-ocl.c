@@ -17,42 +17,44 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
-                  double *alpha, double *beta, double *v, cl_mem d_lap,
-                  cl_mem d_w, cl_mem d_v, cl_mem d_V, const int M,
-                  const int size) {
-  for (unsigned i = 0; i < M; i++) {
-    beta[i] = ocl_vec_norm(ctx, queue, prg, d_w, size);
+                  double *alpha, double *beta, double *orth_vec, cl_mem d_lap,
+                  cl_mem d_w_vec, cl_mem d_orth_vec, cl_mem d_orth_mtx,
+                  const unsigned m, const unsigned size) {
+  for (unsigned i = 0; i < m; i++) {
+    beta[i] = ocl_vec_norm(ctx, queue, prg, d_w_vec, size);
     if (fabs(beta[i] - 0) > EPS) {
-      ocl_mtx_sclr_div(ctx, queue, prg, d_v, d_w, beta[i], size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec, beta[i], size);
     } else {
       for (unsigned i = 0; i < size; i++) {
-        v[i] = (double)rand() / (double)(RAND_MAX / MAX);
+        orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       }
-      cl_int err = clEnqueueWriteBuffer(
-          queue, d_v, CL_TRUE, 0, size * sizeof(double), v, 0, NULL, NULL);
-      double norm_val = ocl_vec_norm(ctx, queue, prg, d_v, size);
-      ocl_mtx_sclr_div(ctx, queue, prg, d_v, d_v, norm_val, size);
+      cl_int err =
+          clEnqueueWriteBuffer(queue, d_orth_vec, CL_TRUE, 0,
+                               size * sizeof(double), orth_vec, 0, NULL, NULL);
+      double norm_val = ocl_vec_norm(ctx, queue, prg, d_orth_vec, size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec, norm_val, size);
     }
 
-    ocl_mtx_col_copy(ctx, queue, prg, d_v, d_V, i, size);
-    ocl_mtx_vec_mul(ctx, queue, prg, d_lap, d_v, d_w, size, size);
-    alpha[i] = ocl_vec_dot(ctx, queue, prg, d_v, d_w, size);
+    ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
+    ocl_mtx_vec_mul(ctx, queue, prg, d_lap, d_orth_vec, d_w_vec, size, size);
+    alpha[i] = ocl_vec_dot(ctx, queue, prg, d_orth_vec, d_w_vec, size);
     if (i == 0) {
-      ocl_calc_w_init(ctx, queue, prg, d_w, alpha[i], d_V, i, size);
+      ocl_calc_w_init(ctx, queue, prg, d_w_vec, alpha[i], d_orth_mtx, i, size);
     } else {
-      ocl_calc_w(ctx, queue, prg, d_w, alpha[i], d_V, beta[i], i, size);
+      ocl_calc_w(ctx, queue, prg, d_w_vec, alpha[i], d_orth_mtx, beta[i], i,
+                 size);
     }
   }
 }
 
-void lanczos(double *lap, const int size, const int M, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+void lanczos(double *lap, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]) {
 
-  double *V = (double *)calloc(size * M, sizeof(double));
-  double *alpha = (double *)calloc(M, sizeof(double));
-  double *beta = (double *)calloc(M, sizeof(double));
-  double *v = (double *)calloc(size, sizeof(double));
-  double *w = (double *)calloc(size, sizeof(double));
+  double *orth_mtx = (double *)calloc(size * m, sizeof(double));
+  double *alpha = (double *)calloc(m, sizeof(double));
+  double *beta = (double *)calloc(m, sizeof(double));
+  double *orth_vec = (double *)calloc(size, sizeof(double));
+  double *w_vec = (double *)calloc(size, sizeof(double));
 
   cl_context context;
   cl_command_queue queue;
@@ -110,29 +112,29 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 
   // Allocate memory
-  cl_mem d_lap, d_V, d_w, d_v;
+  cl_mem d_lap, d_orth_mtx, d_w_vec, d_orth_vec;
 
   size_t bytes = size * size * sizeof(double);
   d_lap = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
-  d_V = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
-  d_w = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(double), NULL,
-                       NULL);
-  d_v = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(double), NULL,
-                       NULL);
+  d_orth_mtx = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
+  d_w_vec = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(double),
+                           NULL, NULL);
+  d_orth_vec = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(double),
+                              NULL, NULL);
 
-  err = clEnqueueWriteBuffer(queue, d_w, CL_TRUE, 0, size * sizeof(double), w,
-                             0, NULL, NULL);
+  err = clEnqueueWriteBuffer(queue, d_w_vec, CL_TRUE, 0, size * sizeof(double),
+                             w_vec, 0, NULL, NULL);
   err = clEnqueueWriteBuffer(queue, d_lap, CL_TRUE, 0,
                              size * size * sizeof(double), lap, 0, NULL, NULL);
 
-  // warm ups
+  // Warm up runs
   for (int t = 0; t < 10; t++)
-    lanczos_algo(context, queue, program, alpha, beta, v, d_lap, d_w, d_v, d_V,
-                 M, size);
+    lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_lap, d_w_vec,
+                 d_orth_vec, d_orth_mtx, m, size);
 
   clock_t t = clock();
-  lanczos_algo(context, queue, program, alpha, beta, v, d_lap, d_w, d_v, d_V, M,
-               size);
+  lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_lap, d_w_vec,
+               d_orth_vec, d_orth_mtx, m, size);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
@@ -141,12 +143,12 @@ void lanczos(double *lap, const int size, const int M, double *eigvals,
 
   // release OpenCL resources
   clReleaseMemObject(d_lap);
-  clReleaseMemObject(d_V);
-  clReleaseMemObject(d_w);
-  clReleaseMemObject(d_v);
+  clReleaseMemObject(d_orth_mtx);
+  clReleaseMemObject(d_w_vec);
+  clReleaseMemObject(d_orth_vec);
   clReleaseProgram(program);
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
 
-  free(V), free(alpha), free(beta), free(v), free(w);
+  free(orth_mtx), free(alpha), free(beta), free(orth_vec), free(w_vec);
 }
