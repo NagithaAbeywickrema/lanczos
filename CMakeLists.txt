@@ -8,7 +8,7 @@ project(
 option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
-option(ENABLE_SYCL "Build rsb SYCL" OFF)
+option(ENABLE_SYCL "Build RSB SYCL" OFF)
 option(ENABLE_OPENCL "Build RSB OpenCL" OFF)
 
 if(ENABLE_SERIAL)

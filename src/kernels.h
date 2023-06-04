@@ -72,7 +72,7 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
                  const int size, sycl::queue queue);
 #endif
 
-// Opencl implemented parallelized functions
+// Parallelized functions of Lanczos routine implemented using Opencl.
 #if defined(ENABLE_OPENCL)
 
 #define CL_TARGET_OPENCL_VERSION 220
@@ -84,23 +84,26 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
 #include <CL/cl.h>
 #endif
 
-double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
-                    cl_mem d_v, const int size);
-void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
-                      cl_mem d_v, cl_mem d_w, double sclr, const unsigned size);
-void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
-                      cl_mem d_v, cl_mem d_V, int i, unsigned size);
-void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
-                     cl_mem d_lap, cl_mem d_v, cl_mem d_w, const int h_a,
-                     const int w_a);
 double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
-                   cl_mem d_v, cl_mem d_w, const int size);
+                   cl_mem d_a_vec, cl_mem d_b_vec, const unsigned size);
+double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
+                    cl_mem d_a_vec, const int size);
+void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
+                      cl_mem d_a_vec, cl_mem d_out_vec, const double sclr,
+                      const unsigned size);
+void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
+                      cl_mem d_vec, cl_mem d_mtx, const unsigned col_index,
+                      const unsigned size);
+void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
+                     cl_mem d_a_mtx, cl_mem d_b_vec, cl_mem d_out_vec,
+                     const unsigned num_rows, const unsigned num_cols);
 void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
-                     cl_mem d_w, double alpha, cl_mem d_V, unsigned i,
-                     const int size);
+                     cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
+                     const unsigned col_index, const unsigned size);
 void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
-                cl_mem d_w, double alpha, cl_mem d_V, double beta, unsigned i,
-                const int size);
+                cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
+                const double beta, const unsigned col_index,
+                const unsigned size);
 #endif
 
 #ifdef __cplusplus
