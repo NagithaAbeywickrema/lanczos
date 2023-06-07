@@ -106,6 +106,10 @@ void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
 void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
                      cl_mem d_a_mtx, cl_mem d_b_vec, cl_mem d_out_vec,
                      const unsigned num_rows, const unsigned num_cols);
+void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
+              cl_mem d_a_row_ptrs, cl_mem d_a_columns, cl_mem d_a_vals,
+              cl_mem d_b_vec, cl_mem d_out_vec, const unsigned num_rows,
+              const unsigned num_cols);
 void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
                      cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
                      const unsigned col_index, const unsigned size);
