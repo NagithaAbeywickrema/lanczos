@@ -20,8 +20,7 @@ void get_tokens(char *str, int *row, int *column, double *val) {
   token = strtok(NULL, " ");
   *column = strtol(token, &endptr, 10);
   assert(endptr != token);
-  // token = strtok(NULL, " ");
-  *val = -1; // strtof(token, &endptr);
+  *val = -1;
   token = strtok(NULL, " ");
 }
 
@@ -73,9 +72,13 @@ void mm_to_csr(char *file_name, int **row_ptrs, int **columns, double **vals,
     if (!header) {
       double val_count_f;
       get_header(buffer, m, n, &val_count_f);
-      *val_count = ((int)val_count_f) * 2;
+      *val_count = ((int)val_count_f) * 2 + *n;
+      index = *n;
       mm = (mm_struct *)calloc(*val_count, sizeof(mm_struct));
-      size = (*val_count) * sizeof(mm_struct);
+      for (int i = 0; i < *n; i++) {
+        mm_struct element = {i + 1, i + 1, 0};
+        mm[i] = element;
+      }
       header = 1;
       continue;
     }
@@ -88,19 +91,8 @@ void mm_to_csr(char *file_name, int **row_ptrs, int **columns, double **vals,
     mm_struct element2 = {column, row, val};
     mm[index++] = element;
     mm[index++] = element2;
-    if (column != cur_col) {
-      if (count != 0) {
-        *val_count += 1;
-        size += sizeof(mm_struct);
-        mm = (mm_struct *)realloc(mm, size);
-        mm_struct ele = {column, column, count};
-        mm[index++] = ele;
-        count = 1;
-      }
-      cur_col = column;
-    } else {
-      count += 1;
-    }
+    mm[row - 1].val += 1;
+    mm[column - 1].val += 1;
   }
 
   // Close the file
