@@ -52,7 +52,7 @@ void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec, d
       int length = row_end - row_start;
       for (int jj = 0 ; jj < length ; jj ++)
           dot += a_vals[ row_start+jj ] * b_vec[ a_columns[ row_start+jj ]];
-      out_vec[ row ] += dot ;
+      out_vec[ row ] = dot ;
   }
 #pragma nomp sync
 }
