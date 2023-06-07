@@ -36,7 +36,7 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha, doub
   }
 }
 
-void lanczos(int *row_ptrs, int *columns, double *vals, const unsigned size, const unsigned m,
+void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
   // Allocate memory
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));

@@ -31,6 +31,8 @@ void nomp_mtx_col_copy(double *vec, double *mtx, const unsigned col_index,
                        const unsigned size);
 void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
                       const unsigned num_rows, const unsigned num_cols);
+void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec, double *out_vec,
+                        const unsigned num_rows, const unsigned num_cols);
 void nomp_calc_w_init(double *w_vec, const double alpha, double *orth_mtx,
                       const unsigned col_index, const unsigned size);
 void nomp_calc_w(double *w_vec, const double alpha, double *orth_mtx,

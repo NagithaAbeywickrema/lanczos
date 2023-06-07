@@ -6,7 +6,7 @@
 #define MAX 10
 #define EPS 1e-12
 
-void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
+void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha, double *beta, double *w_vec,
                   double *orth_vec, double *orth_mtx, const int m,
                   const int size) {
   for (unsigned i = 0; i < m; i++) {
@@ -24,7 +24,8 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
 
     nomp_mtx_col_copy(orth_vec, orth_mtx, i, size);
 
-    nomp_mtx_vec_mul(lap, orth_vec, w_vec, size, size);
+    // nomp_mtx_vec_mul(lap, orth_vec, w_vec, size, size);
+    nomp_spmv(row_ptrs, columns, vals, orth_vec, w_vec, size, size);
 
     alpha[i] = nomp_vec_dot(orth_vec, w_vec, size);
 
@@ -36,7 +37,7 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
   }
 }
 
-void lanczos(double *lap, const unsigned size, const unsigned m,
+void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
   // Allocate host memory
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
@@ -48,15 +49,15 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
 #pragma nomp init(argc, argv)
 
 #pragma nomp update(to                                                         \
-                    : lap[0, size * size], orth_mtx[0, size * m],              \
+                    : row_ptrs[0, size + 1], columns[0, val_count], vals[0, val_count], orth_mtx[0, size * m],              \
                       w_vec[0, size])
 
   // Warm up runs
   for (unsigned k = 0; k < 10; k++)
-    lanczos_algo(lap, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
+    lanczos_algo(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
 
   clock_t t = clock();
-  lanczos_algo(lap, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
+  lanczos_algo(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
@@ -65,7 +66,7 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
   // print_eigen_vals(eigvals, size);
 
 #pragma nomp update(free                                                       \
-                    : lap[0, size * size], orth_mtx[0, size * m],              \
+                    : row_ptrs[0, size + 1], columns[0, val_count], vals[0, val_count], orth_mtx[0, size * m],              \
                       w_vec[0, size], orth_vec[0, size])
 
 #pragma nomp finalize

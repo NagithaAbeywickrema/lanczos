@@ -31,22 +31,23 @@ void create_lap(double *lap, const unsigned size) {
   free(adj), free(diag);
 }
 
-void convert_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
-                    int **columns, double **vals) {
-  int i, j, nnz = 0;
+void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
+                    int **columns, double **vals, int *nnz) {
+  int i, j = 0;
+  (*nnz) = 0;
 
   // Count the number of non-zero elements
   for (i = 0; i < rows; i++) {
     for (j = 0; j < cols; j++) {
       if (matrix[i * cols + j] != 0)
-        nnz++;
+        (*nnz)++;
     }
   }
 
   // Allocate memory for the CSR arrays
   *row_ptrs = (int *)malloc((rows + 1) * sizeof(int));
-  *columns = (int *)malloc(nnz * sizeof(int));
-  *vals = (double *)malloc(nnz * sizeof(double));
+  *columns = (int *)malloc((*nnz) * sizeof(int));
+  *vals = (double *)malloc((*nnz) * sizeof(double));
 
   int k = 0; // Index for the vals and columns arrays
   (*row_ptrs)[0] = 0;
@@ -68,17 +69,17 @@ int main(int argc, char *argv[]) {
   const unsigned M = SIZE;
 
   // Create Laplacian matrix
-  int *row_ptrs, *columns;
+  int *row_ptrs, *columns, val_count;
   double *vals;
   double *lap = (double *)calloc(SIZE * SIZE, sizeof(double));
   create_lap(lap, SIZE);
-  convert_to_csr(lap, SIZE, SIZE, &row_ptrs, &columns, &vals);
+  lap_to_csr(lap, SIZE, SIZE, &row_ptrs, &columns, &vals, &val_count);
 
   // Run Lanczos algorithm
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
 
-  lanczos(row_ptrs, columns, vals, SIZE, M, eigvals, eigvecs, argc, argv);
+  lanczos(row_ptrs, columns, vals, val_count, SIZE, M, eigvals, eigvecs, argc, argv);
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);
