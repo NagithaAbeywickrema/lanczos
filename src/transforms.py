@@ -1,5 +1,6 @@
 import loopy as lp
 from loopy.symbolic import Reduction
+import pymbolic.primitives as prim
 
 LOOPY_LANG_VERSION = (2018, 2)
 
