@@ -21,6 +21,8 @@ if(ENABLE_SERIAL)
       src/lanczos-aux.h
       src/lanczos-aux.c
       src/kernels.h
+      src/matrix-util.h
+      src/matrix-util.c
       src/kernels-serial.c)
   add_executable(rsb-serial ${SOURCES})
   target_link_libraries(rsb-serial PRIVATE m)
@@ -36,6 +38,8 @@ if(ENABLE_NOMP)
       src/print-helper.h
       src/print-helper.c
       src/kernels.h
+      src/matrix-util.h
+      src/matrix-util.c
       src/kernels-nomp.c)
   add_executable(rsb-nomp ${SOURCES})
   target_link_libraries(rsb-nomp PRIVATE m)
@@ -52,6 +56,8 @@ if(ENABLE_CUDA)
       src/print-helper.h
       src/print-helper.c
       src/kernels.h
+      src/matrix-util.h
+      src/matrix-util.c
       src/kernels-cuda.cu)
   add_executable(rsb-cuda ${SOURCES}) # TODO:change file name
   target_link_libraries(rsb-cuda PRIVATE m)
@@ -67,6 +73,8 @@ if (ENABLE_SYCL)
     src/lanczos.h 
     src/print-helper.h
     src/kernels.h
+    src/matrix-util.h
+      src/matrix-util.c
     src/kernels-sycl.cpp)
     add_executable(rsb-sycl ${SOURCES})
     find_package(IntelDPCPP REQUIRED)
@@ -84,6 +92,8 @@ if(ENABLE_OPENCL)
       src/lanczos.h
       src/lanczos-aux.h
       src/kernels.h
+      src/matrix-util.h
+      src/matrix-util.c
       src/print-helper.h)
   add_executable(rsb-ocl ${SOURCES})
   target_compile_definitions(rsb-ocl PRIVATE ENABLE_OPENCL)
