@@ -1,6 +1,7 @@
 #include "lanczos.h"
+#include "print-helper.h"
 
-#define SIZE 5
+#define SIZE 10
 
 void create_lap(double *lap, const unsigned size) {
   // Create random binary matrix
@@ -32,7 +33,7 @@ void create_lap(double *lap, const unsigned size) {
 }
 
 void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
-                    int **columns, double **vals, int *nnz) {
+                int **columns, double **vals, int *nnz) {
   int i, j = 0;
   (*nnz) = 0;
 
@@ -79,7 +80,9 @@ int main(int argc, char *argv[]) {
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
 
-  lanczos(row_ptrs, columns, vals, val_count, SIZE, M, eigvals, eigvecs, argc, argv);
+  lanczos(row_ptrs, columns, vals, val_count, SIZE, M, eigvals, eigvecs, argc,
+          argv);
+  print_eigen_vals(eigvals, SIZE);
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);

@@ -17,7 +17,7 @@ int tqli(double *eVectors, double *eValues, int n, double *diagonal,
   for (i = 0; i < n; i++)
     d[i] = diagonal[i];
   for (i = 0; i < n - 1; i++)
-    e[i] = upper[i+1];
+    e[i] = upper[i + 1];
   e[n - 1] = 0.0;
 
   for (i = 0; i < n; i++) {

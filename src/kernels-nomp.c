@@ -42,17 +42,18 @@ void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
 #pragma nomp sync
 }
 
-void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec, double *out_vec,
-                      const unsigned num_rows, const unsigned num_cols) {
+void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec,
+               double *out_vec, const unsigned num_rows,
+               const unsigned num_cols) {
 #pragma nomp for transform("transforms", "spmv")
-  for (int row = 0; row < num_rows; row++){
-      double dot = 0;
-      int row_start = a_row_ptrs[row];
-      int row_end = a_row_ptrs[row +1];
-      int length = row_end - row_start;
-      for (int jj = 0 ; jj < length ; jj ++)
-          dot += a_vals[ row_start+jj ] * b_vec[ a_columns[ row_start+jj ]];
-      out_vec[ row ] = dot ;
+  for (int row = 0; row < num_rows; row++) {
+    double dot = 0;
+    int row_start = a_row_ptrs[row];
+    int row_end = a_row_ptrs[row + 1];
+    int length = row_end - row_start;
+    for (int jj = 0; jj < length; jj++)
+      dot += a_vals[row_start + jj] * b_vec[a_columns[row_start + jj]];
+    out_vec[row] = dot;
   }
 #pragma nomp sync
 }

@@ -1,7 +1,6 @@
 #include "kernels.h"
 #include "lanczos-aux.h"
 #include "lanczos.h"
-#include "print-helper.h"
 
 #define MAX 10
 #define EPS 1e-12
@@ -84,7 +83,6 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  print_eigen_vals(eigvals, size);
 
   // Free device memory
   cudaFree(d_row_ptrs), cudaFree(d_columns), cudaFree(d_vals),

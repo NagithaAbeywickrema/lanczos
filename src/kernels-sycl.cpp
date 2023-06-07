@@ -7,7 +7,6 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
   queue.submit([&](sycl::handler &h) {
     auto d_a = a_buf.get_access<sycl::access::mode::read>(h);
     auto d_b = b_buf.get_access<sycl::access::mode::read>(h);
-    size_t LOCAL_SIZE = 16;
 
     auto d_c = out_buf.get_access<sycl::access::mode::read_write>(h);
     // Number of work items in each local work group
@@ -25,6 +24,44 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
           if (id < height_a) {
             for (int i = 0; i < width_a; i++)
               dot += d_a[width_a * id + i] * d_b[i];
+            d_c[id] = dot;
+          }
+        });
+  });
+  queue.wait();
+}
+
+void sycl_spmv(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
+               sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
+               sycl::buffer<double> out_buf, const int height_a,
+               const int width_a, sycl::queue queue) {
+
+  queue.submit([&](sycl::handler &h) {
+    auto a_row_ptrs = a_row_buf.get_access<sycl::access::mode::read>(h);
+    auto a_columns = a_columns_buf.get_access<sycl::access::mode::read>(h);
+    auto a_vals = a_vals_buf.get_access<sycl::access::mode::read>(h);
+
+    auto d_b = b_buf.get_access<sycl::access::mode::read>(h);
+
+    auto d_c = out_buf.get_access<sycl::access::mode::read_write>(h);
+    // Number of work items in each local work group
+    size_t local_size = 256;
+
+    // Number of total work items - local_size must be devisor
+    size_t global_size =
+        ((height_a + local_size - 1) / local_size) * local_size;
+
+    h.parallel_for(
+        sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
+        [=](auto item) {
+          int id = item.get_global_id(0);
+          if (id < height_a) {
+            int start = a_row_ptrs[id];
+            int end = a_row_ptrs[id + 1];
+            double dot = 0;
+            // Add each element in the id
+            for (unsigned j = start; j < end; j++)
+              dot += a_vals[j] * d_b[a_columns[j]];
             d_c[id] = dot;
           }
         });

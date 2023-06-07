@@ -79,6 +79,10 @@ void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
 void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
                  sycl::buffer<double> v_buf, double beta, unsigned i,
                  const int size, sycl::queue queue);
+void sycl_spmv(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
+               sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
+               sycl::buffer<double> out_buf, const int height_a,
+               const int width_a, sycl::queue queue);
 #endif
 
 // Parallelized functions of Lanczos routine implemented using Opencl.

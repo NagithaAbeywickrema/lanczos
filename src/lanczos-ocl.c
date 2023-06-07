@@ -1,7 +1,6 @@
 #include "kernels.h"
 #include "lanczos-aux.h"
 #include "lanczos.h"
-#include "print-helper.h"
 
 #define CL_TARGET_OPENCL_VERSION 220
 #ifdef __APPLE__
@@ -152,7 +151,6 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  print_eigen_vals(eigvals, size);
 
   // release OpenCL resources
   clReleaseMemObject(d_row_ptrs);
