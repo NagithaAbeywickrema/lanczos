@@ -1,11 +1,12 @@
 #include "lanczos.h"
 #include "print-helper.h"
+#include "matrix-util.h"
 
 #define SIZE 10
 
 void create_lap(double *lap, const unsigned size) {
   // Create random binary matrix
-  double *adj = (double *)calloc(SIZE * SIZE, sizeof(double));
+  double *adj = (double *)calloc(size * size, sizeof(double));
   for (unsigned i = 0; i < size * size; i++) {
     adj[i] = rand() % 2;
   }
@@ -16,7 +17,7 @@ void create_lap(double *lap, const unsigned size) {
       adj[i * size + j] = adj[j * size + i];
 
   // Create degree matrix
-  double *diag = (double *)calloc(SIZE * SIZE, sizeof(double));
+  double *diag = (double *)calloc(size * size, sizeof(double));
   for (unsigned i = 0; i < size; i++) {
     double sum = 0;
     for (unsigned j = 0; j < size; j++) {
@@ -67,20 +68,24 @@ void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
 }
 
 int main(int argc, char *argv[]) {
-  const unsigned M = SIZE;
+  unsigned M = SIZE;
+  unsigned N = SIZE;
+  char *file_name = "../src/dictionary28.mtx";
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;
   double *vals;
   double *lap = (double *)calloc(SIZE * SIZE, sizeof(double));
-  create_lap(lap, SIZE);
-  lap_to_csr(lap, SIZE, SIZE, &row_ptrs, &columns, &vals, &val_count);
+  // create_lap(lap, SIZE);
+  // lap_to_csr(lap, SIZE, SIZE, &row_ptrs, &columns, &vals, &val_count);
 
+  mm_to_csr(file_name, &row_ptrs, &columns, &vals, &N, &M, &val_count);
   // Run Lanczos algorithm
   double *eigvals = (double *)calloc(M, sizeof(double));
-  double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
+  double *eigvecs = (double *)calloc(M * N, sizeof(double));
 
-  lanczos(row_ptrs, columns, vals, val_count, SIZE, M, eigvals, eigvecs, argc,
+
+  lanczos(row_ptrs, columns, vals, val_count, N, M, eigvals, eigvecs, argc,
           argv);
   print_eigen_vals(eigvals, SIZE);
 
