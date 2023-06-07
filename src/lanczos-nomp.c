@@ -66,7 +66,6 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
-
 #pragma nomp update(free                                                       \
                     : row_ptrs[0, size + 1], columns[0, val_count],            \
                       vals[0, val_count], orth_mtx[0, size * m],               \

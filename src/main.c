@@ -1,6 +1,6 @@
 #include "lanczos.h"
-#include "print-helper.h"
 #include "matrix-util.h"
+#include "print-helper.h"
 
 #define SIZE 10
 
@@ -70,7 +70,7 @@ void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
 int main(int argc, char *argv[]) {
   unsigned M = SIZE;
   unsigned N = SIZE;
-  char *file_name = "../src/dictionary28.mtx";
+  char *file_name = "/home/hvpubudu/nomp/lanczos/src/usroads.mtx";
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;
@@ -84,10 +84,9 @@ int main(int argc, char *argv[]) {
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * N, sizeof(double));
 
-
   lanczos(row_ptrs, columns, vals, val_count, N, M, eigvals, eigvecs, argc,
           argv);
-  print_eigen_vals(eigvals, SIZE);
+  // print_eigen_vals(eigvals, SIZE);
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);
