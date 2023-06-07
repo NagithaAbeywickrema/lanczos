@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void lanczos(double *lap, const unsigned size, const unsigned m,
+void lanczos(int *row_ptrs, int *columns, double *vals, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]);
 
 #ifdef __cplusplus

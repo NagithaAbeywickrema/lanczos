@@ -37,6 +37,19 @@ void serial_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
   }
 }
 
+void serial_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec, double *out_vec,
+                        const unsigned num_rows, const unsigned num_cols) {
+  for (unsigned i = 0; i < num_rows; i++) {
+    int start = a_row_ptrs[i];
+    int end = a_row_ptrs[i + 1];
+    double dot = 0;
+    // Add each element in the row
+    for (unsigned j = start; j < end; j++)
+      dot += a_vals[j] * b_vec[a_columns[j]];
+    out_vec[i] = dot;
+  }
+}
+
 void serial_calc_w_init(double *w_vec, const double alpha, double *orth_mtx,
                         const unsigned col_index, const unsigned size) {
   for (unsigned j = 0; j < size; j++) {
