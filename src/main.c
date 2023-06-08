@@ -70,7 +70,7 @@ void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
 int main(int argc, char *argv[]) {
   unsigned M = SIZE;
   unsigned N = SIZE;
-  char *file_name = "../src/delaunay_n13.mtx";
+  char *file_name = "../data/sparse-matrices/small-test.mtx";
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;
@@ -78,15 +78,15 @@ int main(int argc, char *argv[]) {
   double *lap = (double *)calloc(SIZE * SIZE, sizeof(double));
   // create_lap(lap, SIZE);
   // lap_to_csr(lap, SIZE, SIZE, &row_ptrs, &columns, &vals, &val_count);
-
   mm_to_csr(file_name, &row_ptrs, &columns, &vals, &N, &M, &val_count);
+
   // Run Lanczos algorithm
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * N, sizeof(double));
 
   lanczos(row_ptrs, columns, vals, val_count, N, M, eigvals, eigvecs, argc,
           argv);
-  // print_eigen_vals(eigvals, SIZE);
+  print_eigen_vals(eigvals, N);
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);
