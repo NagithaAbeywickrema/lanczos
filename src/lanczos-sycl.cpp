@@ -3,6 +3,7 @@
 #include "lanczos.h"
 
 #define MAX 1000000
+#define EPS 1e-12
 
 void lanczos_algo(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
                   sycl::buffer<double> a_vals_buf, double *alpha, double *beta,
@@ -12,7 +13,7 @@ void lanczos_algo(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
   for (unsigned i = 0; i < m; i++) {
     beta[i] = sycl_mtx_norm(w_buf, size, queue);
 
-    if (beta[i] != 0) {
+    if (fabs(beta[i] - 0) > EPS) {
       sycl_mtx_sclr_div(w_buf, beta[i], orth_vec_buf, size, queue);
     } else {
       for (unsigned i = 0; i < size; i++) {
