@@ -15,7 +15,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64, global_size;
+  size_t local_size = 32, global_size;
   unsigned num_blocks = (size + local_size - 1) / local_size;
   global_size = num_blocks * local_size;
 
@@ -59,7 +59,7 @@ void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64,
+  size_t local_size = 32,
          global_size = ((size + local_size - 1) / local_size) * local_size;
 
   knl = clCreateKernel(prg, "mtx_sclr_div", &err);
@@ -81,7 +81,7 @@ void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64,
+  size_t local_size = 32,
          global_size = ((size + local_size - 1) / local_size) * local_size;
 
   knl = clCreateKernel(prg, "mtx_col_copy", &err);
@@ -103,7 +103,7 @@ void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64,
+  size_t local_size = 32,
          global_size = ((num_rows + local_size - 1) / local_size) * local_size;
 
   knl = clCreateKernel(prg, "mtx_vec_mul", &err);
@@ -120,12 +120,38 @@ void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
   clReleaseKernel(knl);
 }
 
+void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
+              cl_mem d_a_row_ptrs, cl_mem d_a_columns, cl_mem d_a_vals,
+              cl_mem d_b_vec, cl_mem d_out_vec, const unsigned num_rows,
+              const unsigned num_cols) {
+  cl_int err;
+  cl_kernel knl;
+
+  size_t local_size = 32,
+         global_size = ((num_rows + local_size - 1) / local_size) * local_size;
+
+  knl = clCreateKernel(prg, "spmv", &err);
+
+  err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_a_row_ptrs);
+  err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_a_columns);
+  err |= clSetKernelArg(knl, 2, sizeof(cl_mem), &d_a_vals);
+  err |= clSetKernelArg(knl, 3, sizeof(cl_mem), &d_b_vec);
+  err |= clSetKernelArg(knl, 4, sizeof(cl_mem), &d_out_vec);
+  err |= clSetKernelArg(knl, 5, sizeof(unsigned), &num_rows);
+  err |= clSetKernelArg(knl, 6, sizeof(unsigned), &num_cols);
+
+  err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
+                               0, NULL, NULL);
+  clFinish(queue);
+  clReleaseKernel(knl);
+}
+
 double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
                    cl_mem d_a_vec, cl_mem d_b_vec, const unsigned size) {
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64, global_size;
+  size_t local_size = 32, global_size;
   unsigned num_blocks = (size + local_size - 1) / local_size;
   global_size = num_blocks * local_size;
 
@@ -167,7 +193,7 @@ void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64,
+  size_t local_size = 32,
          global_size = ((size + local_size - 1) / local_size) * local_size;
 
   knl = clCreateKernel(prg, "calc_w_init", &err);
@@ -191,7 +217,7 @@ void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
   cl_int err;
   cl_kernel knl;
 
-  size_t local_size = 64,
+  size_t local_size = 32,
          global_size = ((size + local_size - 1) / local_size) * local_size;
 
   knl = clCreateKernel(prg, "calc_w", &err);

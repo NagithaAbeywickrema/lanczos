@@ -10,6 +10,7 @@ extern "C" {
 
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]);
+void lanczos_bench(int argc, char *argv[]);
 
 #ifdef __cplusplus
 }

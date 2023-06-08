@@ -1,10 +1,10 @@
 #include "lanczos.h"
 
-#define SIZE 5
+#define SIZE 2000
 
 void create_lap(double *lap, const unsigned size) {
   // Create random binary matrix
-  double *adj = (double *)calloc(SIZE * SIZE, sizeof(double));
+  double *adj = (double *)calloc(size * size, sizeof(double));
   for (unsigned i = 0; i < size * size; i++) {
     adj[i] = rand() % 2;
   }
@@ -15,7 +15,7 @@ void create_lap(double *lap, const unsigned size) {
       adj[i * size + j] = adj[j * size + i];
 
   // Create degree matrix
-  double *diag = (double *)calloc(SIZE * SIZE, sizeof(double));
+  double *diag = (double *)calloc(size * size, sizeof(double));
   for (unsigned i = 0; i < size; i++) {
     double sum = 0;
     for (unsigned j = 0; j < size; j++) {
@@ -79,7 +79,12 @@ int main(int argc, char *argv[]) {
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * SIZE, sizeof(double));
 
+
+  #if defined(ENABLE_BENCH)
+  lanczos_bench(argc, argv);
+  #else
   lanczos(row_ptrs, columns, vals, val_count, SIZE, M, eigvals, eigvecs, argc, argv);
+  #endif
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);

@@ -9,7 +9,10 @@ option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
 option(ENABLE_SYCL "Build RSB SYCL" OFF)
-option(ENABLE_OPENCL "Build RSB OpenCL" OFF)
+option(ENABLE_OPENCL "Build RSB OpenCL" ON)
+option(ENABLE_BENCH "Bench kernels" ON)
+option(NOMP_BENCH "Bench nomp" ON)
+option(OCL_BENCH "Bench ocl" ON)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -89,4 +92,39 @@ if(ENABLE_OPENCL)
   target_compile_definitions(rsb-ocl PRIVATE ENABLE_OPENCL)
   find_package(OpenCL REQUIRED)
   target_link_libraries(rsb-ocl PRIVATE OpenCL::OpenCL m)
+endif()
+
+if(ENABLE_BENCH)
+  if(NOMP_BENCH)
+    set(SOURCES
+        src/main.c
+        src/lanczos.h
+        bench/nomp-knl-bench.c
+        src/kernels.h
+        src/print-helper.c
+        src/lanczos-aux.c
+        src/kernels-nomp.c
+        src/lanczos-aux.h
+        src/print-helper.h)
+    add_executable(nomp-bench ${SOURCES})
+    target_compile_definitions(nomp-bench PRIVATE ENABLE_BENCH)
+    target_link_libraries(nomp-bench PRIVATE m)
+  endif()
+
+  if(OCL_BENCH)
+    set(SOURCES
+      src/main.c
+      src/lanczos.h
+      bench/ocl-knl-bench.c
+      src/kernels.h
+      src/print-helper.c
+      src/lanczos-aux.c
+      src/kernels-ocl.c
+      src/lanczos-aux.h
+      src/print-helper.h)
+    add_executable(ocl-bench ${SOURCES})
+    target_compile_definitions(ocl-bench PRIVATE ENABLE_BENCH ENABLE_OPENCL)
+    find_package(OpenCL REQUIRED)
+    target_link_libraries(ocl-bench PRIVATE OpenCL::OpenCL m)
+  endif()
 endif()
