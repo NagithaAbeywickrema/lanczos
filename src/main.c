@@ -70,7 +70,7 @@ void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
 int main(int argc, char *argv[]) {
   unsigned M = SIZE;
   unsigned N = SIZE;
-  char *file_name = "/home/hvpubudu/nomp/lanczos/src/usroads.mtx";
+  char *file_name = "../src/delaunay_n13.mtx";
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;

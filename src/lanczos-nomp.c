@@ -11,7 +11,7 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
   for (unsigned i = 0; i < m; i++) {
     beta[i] = nomp_vec_norm(w_vec, size);
 
-    if (fabs(beta[i] - 0) > 1e-8) {
+    if (fabs(beta[i] - 0) > EPS) {
       nomp_vec_sclr_div(w_vec, orth_vec, beta[i], size);
     } else {
       for (unsigned i = 0; i < size; i++)
