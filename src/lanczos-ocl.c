@@ -34,7 +34,6 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
     }
 
     ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
-
     ocl_spmv(ctx, queue, prg, d_row_ptrs, d_columns, d_vals, d_orth_vec,
              d_w_vec, size, size);
     alpha[i] = ocl_vec_dot(ctx, queue, prg, d_orth_vec, d_w_vec, size);
