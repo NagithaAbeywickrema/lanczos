@@ -5,14 +5,15 @@ project(
   DESCRIPTION "RSB"
   LANGUAGES C CXX)
 
-option(ENABLE_SERIAL "Build RSB Serial" ON)
+option(ENABLE_SERIAL "Build RSB Serial" OFF)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
 option(ENABLE_SYCL "Build RSB SYCL" OFF)
-option(ENABLE_OPENCL "Build RSB OpenCL" ON)
+option(ENABLE_OPENCL "Build RSB OpenCL" OFF)
 option(ENABLE_BENCH "Bench kernels" ON)
-option(NOMP_BENCH "Bench nomp" ON)
-option(OCL_BENCH "Bench ocl" ON)
+option(NOMP_BENCH "Bench nomp" OFF)
+option(OCL_BENCH "Bench ocl" OFF)
+option(CUDA_BENCH "Bench Cuda" ON)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -126,5 +127,22 @@ if(ENABLE_BENCH)
     target_compile_definitions(ocl-bench PRIVATE ENABLE_BENCH ENABLE_OPENCL)
     find_package(OpenCL REQUIRED)
     target_link_libraries(ocl-bench PRIVATE OpenCL::OpenCL m)
+  endif()
+
+  if(CUDA_BENCH)
+    enable_language(CUDA)
+    set(SOURCES
+      src/main.c
+      src/lanczos.h
+      bench/cuda-knl-bench.cu
+      src/kernels.h
+      src/print-helper.c
+      src/lanczos-aux.c
+      src/kernels-cuda.cu
+      src/lanczos-aux.h
+      src/print-helper.h)
+    add_executable(cuda-bench ${SOURCES})
+    target_compile_definitions(cuda-bench PRIVATE ENABLE_BENCH ENABLE_CUDA)
+    target_link_libraries(cuda-bench PRIVATE m)
   endif()
 endif()
