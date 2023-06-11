@@ -46,9 +46,9 @@ def lanczos_algorithm(A, k):
     for j in range(k): 
         beta[j] = np.linalg.norm(w)
         if(beta[j] != 0):
-            v = np.random.randn(n)
             v = w / beta[j]
         else:
+            v = np.random.randn(n)
             v = v / np.linalg.norm(v)
         V[:, j] = v
         w_p = A @ v
@@ -79,19 +79,20 @@ def lanczos_algorithm(A, k):
 
 
 # Create a random symmetric matrix
-size = 5  # matrix dimension
+size = 10  # matrix dimension
 adj = np.random.randint(2, size=(size, size))  # random binary matrix
 adj = np.triu(adj, 1) + np.triu(adj, 1).T  # make symmetric
 diag = np.diag(np.sum(adj, axis=1))  # create degree matrix
-lap = diag - adj # create Laplacian matrix
-
+# lap = diag - adj # create Laplacian matrix
+lap =[[6.000000, 0.000000, -1.000000, -1.000000, -1.000000, -1.000000, -1.000000, 0.000000, -1.000000, 0.000000 ],[0.000000, 3.000000, 0.000000, 0.000000, -1.000000, 0.000000, -1.000000, -1.000000, 0.000000, 0.000000 ],[-1.000000, 0.000000, 3.000000, 0.000000, -1.000000, -1.000000, 0.000000, 0.000000, 0.000000, 0.000000 ],[-1.000000, 0.000000, 0.000000, 4.000000, -1.000000, 0.000000, -1.000000, -1.000000, 0.000000, 0.000000 ],[-1.000000, -1.000000, -1.000000, -1.000000, 5.000000, 0.000000, 0.000000, 0.000000, 0.000000, -1.000000 ],[-1.000000, 0.000000, -1.000000, 0.000000, 0.000000, 4.000000, -1.000000, -1.000000, 0.000000, 0.000000 ],[-1.000000, -1.000000, 0.000000, -1.000000, 0.000000, -1.000000, 5.000000, 0.000000, -1.000000, 0.000000 ],[0.000000, -1.000000, 0.000000, -1.000000, 0.000000, -1.000000, 0.000000, 4.000000, -1.000000, 0.000000 ],[-1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, -1.000000, -1.000000, 3.000000, 0.000000 ],[0.000000, 0.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000 ],]
+lap = np.array(lap)
 evals, evecs = np.linalg.eigh(lap)
-# print(evals)
+print(evals)
 # print(evecs)
 
 eigvals, eigvecs = lanczos_algorithm(lap, size)
 print("Smallest eigenvalues: \n", eigvals, "\n")
-print("Smallest eigenvectors: \n", eigvecs, "\n")
+# print("Smallest eigenvectors: \n", eigvecs, "\n")
 
 # Graph partitioning using eigen vector
 lap_div_1 = lap.copy()
