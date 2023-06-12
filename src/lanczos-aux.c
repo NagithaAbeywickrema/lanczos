@@ -4,7 +4,7 @@
 #include <string.h>
 #include <time.h>
 
-#define EPS 1e-12
+#define EPS 1e-8
 
 int tqli(double *eVectors, double *eValues, int n, double *diagonal,
          double *upper, int id) {

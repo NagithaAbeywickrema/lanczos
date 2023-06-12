@@ -2,14 +2,17 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
-#define MAX 1000000
+#define MAX 1000000 //TODO: move to header file
 #define EPS 1e-12
 
 void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
                   double *beta, double *w_vec, double *orth_vec,
                   double *orth_mtx, const unsigned m, const unsigned size) {
   for (unsigned i = 0; i < m; i++) {
-    beta[i] = serial_vec_norm(w_vec, size);
+    if(i>0)
+      beta[i] = serial_vec_norm(w_vec, size);
+      else
+      beta[i]=0;
 
     if (fabs(beta[i] - 0) > EPS) {
       serial_vec_sclr_div(w_vec, orth_vec, beta[i], size);
