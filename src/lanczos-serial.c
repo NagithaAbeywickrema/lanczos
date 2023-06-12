@@ -37,7 +37,8 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
 
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
              const unsigned size, const unsigned m, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+             double *eigvecs, int argc, char *argv[],
+             time_struct *time_measure) {
   // Allocate memory
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
   double *alpha = (double *)calloc(m, sizeof(double));
@@ -56,7 +57,7 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
-  tqli(eigvecs, eigvals, size, alpha, beta, 0);
+  // tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
   free(orth_mtx), free(alpha), free(beta), free(orth_vec), free(w_vec);
 }

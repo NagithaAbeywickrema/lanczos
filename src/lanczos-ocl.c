@@ -49,9 +49,64 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
   }
 }
 
+void lanczos_algo1(cl_context ctx, cl_command_queue queue, cl_program prg,
+                   double *alpha, double *beta, double *orth_vec,
+                   cl_mem d_row_ptrs, cl_mem d_columns, cl_mem d_vals,
+                   cl_mem d_w_vec, cl_mem d_orth_vec, cl_mem d_orth_mtx,
+                   const unsigned m, const unsigned size,
+                   time_struct *time_measure) {
+
+  for (unsigned i = 0; i < m; i++) {
+    clock_t t = clock();
+    beta[i] = ocl_vec_norm(ctx, queue, prg, d_w_vec, size);
+    t = clock() - t;
+    time_measure->vec_norm += (double)t / (CLOCKS_PER_SEC);
+    if (fabs(beta[i] - 0) > EPS) {
+      t = clock();
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec, beta[i], size);
+      t = clock() - t;
+      time_measure->vec_sclr_div += (double)t / (CLOCKS_PER_SEC);
+    } else {
+      for (unsigned i = 0; i < size; i++) {
+        orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
+      }
+      cl_int err =
+          clEnqueueWriteBuffer(queue, d_orth_vec, CL_TRUE, 0,
+                               size * sizeof(double), orth_vec, 0, NULL, NULL);
+      double norm_val = ocl_vec_norm(ctx, queue, prg, d_orth_vec, size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec, norm_val, size);
+    }
+    t = clock();
+    ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
+    t = clock() - t;
+    time_measure->mtx_col_copy += (double)t / (CLOCKS_PER_SEC);
+    // ocl_mtx_vec_mul(ctx, queue, prg, d_lap, d_orth_vec, d_w_vec, size, size);
+    t = clock();
+    ocl_spmv(ctx, queue, prg, d_row_ptrs, d_columns, d_vals, d_orth_vec,
+             d_w_vec, size, size);
+    t = clock() - t;
+    time_measure->spmv += (double)t / (CLOCKS_PER_SEC);
+    t = clock();
+    alpha[i] = ocl_vec_dot(ctx, queue, prg, d_orth_vec, d_w_vec, size);
+    t = clock() - t;
+    time_measure->vec_dot += (double)t / (CLOCKS_PER_SEC);
+    if (i == 0) {
+      ocl_calc_w_init(ctx, queue, prg, d_w_vec, alpha[i], d_orth_mtx, i, size);
+    } else {
+      t = clock();
+
+      ocl_calc_w(ctx, queue, prg, d_w_vec, alpha[i], d_orth_mtx, beta[i], i,
+                 size);
+      t = clock() - t;
+      time_measure->calc_w += (double)t / (CLOCKS_PER_SEC);
+    }
+  }
+}
+
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
              const unsigned size, const unsigned m, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+             double *eigvecs, int argc, char *argv[],
+             time_struct *time_measure) {
 
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
   double *alpha = (double *)calloc(m, sizeof(double));
@@ -145,12 +200,13 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
                  d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
 
   clock_t t = clock();
-  lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
-               d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
+  lanczos_algo1(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
+                d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size,
+                time_measure);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
 
-  tqli(eigvecs, eigvals, size, alpha, beta, 0);
+  // tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
   // release OpenCL resources
   clReleaseMemObject(d_row_ptrs);

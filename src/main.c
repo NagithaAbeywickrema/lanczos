@@ -70,7 +70,7 @@ void lap_to_csr(double *matrix, int rows, int cols, int **row_ptrs,
 int main(int argc, char *argv[]) {
   unsigned M = SIZE;
   unsigned N = SIZE;
-  char *file_name = "../data/sparse-matrices/small-test.mtx";
+  char *file_name = "../data/sparse-matrices/delaunay_n13.mtx";
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;
@@ -84,10 +84,14 @@ int main(int argc, char *argv[]) {
   double *eigvals = (double *)calloc(M, sizeof(double));
   double *eigvecs = (double *)calloc(M * N, sizeof(double));
 
+  time_struct time_measure = {0, 0, 0, 0, 0, 0};
   lanczos(row_ptrs, columns, vals, val_count, N, M, eigvals, eigvecs, argc,
-          argv);
-  print_eigen_vals(eigvals, N);
-
+          argv, &time_measure);
+  // print_eigen_vals(eigvals, SIZE);
+  printf("vec_norm = %f, vec_dot = %f, vec_sclr_div = %f, mtx_col_copy = %f, "
+         "spmv = %f, calc_w = %f\n",
+         time_measure.vec_norm, time_measure.vec_dot, time_measure.vec_sclr_div,
+         time_measure.mtx_col_copy, time_measure.spmv, time_measure.calc_w);
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);
 

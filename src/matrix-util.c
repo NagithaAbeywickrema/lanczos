@@ -111,7 +111,6 @@ void mm_to_csr(char *file_name, int **row_ptrs, int **columns, double **vals,
   for (int i = 0; i < (*val_count); i++) {
     if (current_row != mm[i].row) {
       (*row_ptrs)[current_row] = row_val_count;
-      printf("row_val_count:%d\n", (row_val_count));
       current_row = mm[i].row;
     }
     row_val_count++;
