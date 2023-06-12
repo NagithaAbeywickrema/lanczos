@@ -40,6 +40,7 @@ void nomp_calc_w_init(double *w_vec, const double alpha, double *orth_mtx,
 void nomp_calc_w(double *w_vec, const double alpha, double *orth_mtx,
                  const double beta, const unsigned col_index,
                  const unsigned size);
+void nomp_d2d_mem_cpy(double *a, double *b, unsigned int N);
 
 // Parallelized functions of Lanczos routine implemented using Cuda.
 double cuda_vec_dot(double *d_a_vec, double *d_b_vec, const unsigned size);

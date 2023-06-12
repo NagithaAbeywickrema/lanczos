@@ -45,6 +45,8 @@ if(ENABLE_NOMP)
       src/matrix-util.c
       src/kernels-nomp.c)
   add_executable(rsb-nomp ${SOURCES})
+  find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+  target_link_libraries(rsb-nomp PRIVATE Python3::Python)
   target_link_libraries(rsb-nomp PRIVATE m)
 endif()
 
@@ -117,6 +119,8 @@ if(ENABLE_BENCH)
         src/lanczos-aux.h
         src/print-helper.h)
     add_executable(nomp-bench ${SOURCES})
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+  target_link_libraries(nomp-bench PRIVATE Python3::Python)
     target_compile_definitions(nomp-bench PRIVATE ENABLE_BENCH)
     target_link_libraries(nomp-bench PRIVATE m)
   endif()

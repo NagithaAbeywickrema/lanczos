@@ -38,8 +38,8 @@ FILE *open_file(const char *suffix) {
 }
 
 void vec_norm_bench() {
-    FILE *fp = open_file("vec-norm");
-    for(unsigned i = 1; i < 1e6; i = inc(i)) {
+    // FILE *fp = open_file("vec-norm-lsize");
+    for(unsigned i = 1; i < 5; i = inc(i)) {
         double *h_a = create_host_vec(i);
         #pragma nomp update(to: h_a[0, i])
 
@@ -52,11 +52,11 @@ void vec_norm_bench() {
             nomp_vec_norm(h_a, i);
         t = clock() - t;
 
-        fprintf(fp, "%s,%s,%u,%e\n", "vec-norm","nomp", i, (double)t / (CLOCKS_PER_SEC*1000));
+        // fprintf(fp, "%s,%s,%u,%e\n", "vec-norm","nomp", i, (double)t / (CLOCKS_PER_SEC*1000));
         #pragma nomp update(free: h_a[0, i])
         tfree(&h_a);
     }
-    fclose(fp);
+    // fclose(fp);
 }
 
 void vec_sclr_div_bench() {
@@ -67,20 +67,30 @@ void vec_sclr_div_bench() {
         #pragma nomp update(to: h_a[0, i])
         #pragma nomp update(alloc: h_b[0, i])
 
+        //Warmup d2d
+        for(int j = 0; j< 1000; j++)
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+
         //Warmup
         for(int j = 0; j< 1000; j++)
             nomp_vec_sclr_div(h_a, h_b, 10, i);
+
+        clock_t t1 = clock();
+        for(int j=0; j <1000; j++)
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+        t1 = clock() - t1;
 
         clock_t t = clock();
         for (int j=0; j < 1000; j++)
             nomp_vec_sclr_div(h_a, h_b, 10, i);
         t = clock() - t;
 
-        fprintf(fp, "%s,%s,%u,%e\n", "vec-sclr-div","nomp", i, (double)t / (CLOCKS_PER_SEC*1000));
+        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div","nomp", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
         #pragma nomp update(free: h_a[0, i], h_b[0,i])
         tfree(&h_a);
         free(h_b);
     }
+    fclose(fp);
 }
 
 void mtx_col_copy_bench() {
@@ -133,6 +143,8 @@ void calc_w_bench() {
 
 void lanczos_bench(int argc, char *argv[]) {
     #pragma nomp init(argc, argv)
-    calc_w_bench();
+    vec_sclr_div_bench();
+    // vec_norm_bench();
+    // calc_w_bench();
     #pragma nomp finalize
 }

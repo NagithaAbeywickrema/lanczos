@@ -50,6 +50,7 @@ def custom_optimize_reduction(
     return tunit
 
 def stream_data_flow_loop(knl, context):
+    print("context: ", context)
     (iname,) = knl.default_entrypoint.all_inames()
     i_inner, i_outer = f"{iname}_inner", f"{iname}_outer"
     knl = lp.split_iname(
@@ -70,5 +71,5 @@ def spmv(knl, context):
         knl, "row", 32, inner_iname="row_inner", outer_iname="row_outer"
     )
 
-    knl = custom_optimize_reduction(knl)
+    # knl = custom_optimize_reduction(knl)
     return knl
