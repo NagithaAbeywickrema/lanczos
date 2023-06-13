@@ -2,10 +2,7 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
-#define MAX 10
-#define EPS 1e-12
-
-void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
+void lanczos_algo(unsigned *d_row_ptrs, unsigned *d_columns, double *d_vals,
                   double *alpha, double *beta, double *d_w_vec, double *w_vec,
                   double *d_orth_vec, double *orth_vec, double *d_orth_mtx,
                   const unsigned m, const unsigned size) {
@@ -40,9 +37,9 @@ void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
   }
 }
 
-void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
-             const unsigned size, const unsigned m, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
+             const unsigned val_count, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]) {
   // Allocate host memory
   double *alpha = (double *)calloc(m, sizeof(double));
   double *beta = (double *)calloc(m, sizeof(double));
@@ -51,20 +48,20 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
 
   // Device memory
   double *d_vals, *d_orth_mtx, *d_orth_vec, *d_w_vec;
-  int *d_row_ptrs, *d_columns;
+  unsigned *d_row_ptrs, *d_columns;
 
   // Allocate device memory
-  cudaMalloc((void **)&d_row_ptrs, (size + 1) * sizeof(int));
-  cudaMalloc((void **)&d_columns, (val_count) * sizeof(int));
+  cudaMalloc((void **)&d_row_ptrs, (size + 1) * sizeof(unsigned));
+  cudaMalloc((void **)&d_columns, (val_count) * sizeof(unsigned));
   cudaMalloc((void **)&d_vals, (val_count) * sizeof(double));
   cudaMalloc((void **)&d_orth_mtx, (size * m) * sizeof(double));
   cudaMalloc((void **)&d_orth_vec, (size) * sizeof(double));
   cudaMalloc((void **)&d_w_vec, (size) * sizeof(double));
 
   // H2D memory copy
-  cudaMemcpy(d_row_ptrs, row_ptrs, (size + 1) * sizeof(int),
+  cudaMemcpy(d_row_ptrs, row_ptrs, (size + 1) * sizeof(unsigned),
              cudaMemcpyHostToDevice);
-  cudaMemcpy(d_columns, columns, (val_count) * sizeof(int),
+  cudaMemcpy(d_columns, columns, (val_count) * sizeof(unsigned),
              cudaMemcpyHostToDevice);
   cudaMemcpy(d_vals, vals, (val_count) * sizeof(double),
              cudaMemcpyHostToDevice);
@@ -76,11 +73,12 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
 
   // Measure time
   clock_t t = clock();
-  lanczos_algo(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec, w_vec,
-               d_orth_vec, orth_vec, d_orth_mtx, m, size);
+  for (unsigned k = 0; k < TRIALS; k++)
+    lanczos_algo(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec, w_vec,
+                 d_orth_vec, orth_vec, d_orth_mtx, m, size);
   t = clock() - t;
 
-  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
+  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 

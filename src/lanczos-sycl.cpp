@@ -2,14 +2,12 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
-#define MAX 1000000
-#define EPS 1e-12
-
-void lanczos_algo(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
+void lanczos_algo(sycl::buffer<unsigned> a_row_buf,
+                  sycl::buffer<unsigned> a_columns_buf,
                   sycl::buffer<double> a_vals_buf, double *alpha, double *beta,
                   sycl::buffer<double> w_buf, sycl::buffer<double> orth_vec_buf,
                   double *orth_vec, sycl::buffer<double> orth_mtx_buf,
-                  const int m, const int size, sycl::queue queue) {
+                  const unsigned m, const unsigned size, sycl::queue queue) {
   for (unsigned i = 0; i < m; i++) {
     beta[i] = sycl_mtx_norm(w_buf, size, queue);
 
@@ -39,9 +37,9 @@ void lanczos_algo(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
   }
 }
 
-void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
-             const unsigned size, const unsigned m, double *eigvals,
-             double *eigvecs, int argc, char *argv[]) {
+void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
+             const unsigned val_count, const unsigned size, const unsigned m,
+             double *eigvals, double *eigvecs, int argc, char *argv[]) {
   auto sycl_platforms = sycl::platform().get_platforms();
   auto sycl_pdevices = sycl_platforms[2].get_devices();
   sycl::device device = sycl_pdevices[0];
@@ -64,16 +62,18 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count,
   sycl::buffer w_buf{w_vec, sycl::range<1>(size)};
 
   // warm ups
-  for (int k = 0; k < 10; k++)
+  for (unsigned k = 0; k < 10; k++)
     lanczos_algo(a_row_buf, a_columns_buf, a_vals_buf, alpha, beta, w_buf,
                  orth_vec_buf, orth_vec, orth_mtx_buf, m, size, queue);
 
+  // Measure time
   clock_t t = clock();
-  lanczos_algo(a_row_buf, a_columns_buf, a_vals_buf, alpha, beta, w_buf,
-               orth_vec_buf, orth_vec, orth_mtx_buf, m, size, queue);
+  for (unsigned k = 0; k < TRIALS; k++)
+    lanczos_algo(a_row_buf, a_columns_buf, a_vals_buf, alpha, beta, w_buf,
+                 orth_vec_buf, orth_vec, orth_mtx_buf, m, size, queue);
   t = clock() - t;
 
-  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
+  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 

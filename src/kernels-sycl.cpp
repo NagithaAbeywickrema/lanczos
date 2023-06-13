@@ -31,10 +31,11 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
   queue.wait();
 }
 
-void sycl_spmv(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
+void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
+               sycl::buffer<unsigned> a_columns_buf,
                sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
-               sycl::buffer<double> out_buf, const int height_a,
-               const int width_a, sycl::queue queue) {
+               sycl::buffer<double> out_buf, const unsigned height_a,
+               const unsigned width_a, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto a_row_ptrs = a_row_buf.get_access<sycl::access::mode::read>(h);
@@ -54,10 +55,10 @@ void sycl_spmv(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          int id = item.get_global_id(0);
+          unsigned id = item.get_global_id(0);
           if (id < height_a) {
-            int start = a_row_ptrs[id];
-            int end = a_row_ptrs[id + 1];
+            unsigned start = a_row_ptrs[id];
+            unsigned end = a_row_ptrs[id + 1];
             double dot = 0;
             // Add each element in the id
             for (unsigned j = start; j < end; j++)

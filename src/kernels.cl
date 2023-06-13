@@ -26,13 +26,13 @@ __kernel void mtx_vec_mul(__global double *a, __global double *b,
   }
 };
 
-__kernel void spmv(__global int *a_row_ptrs, __global int *a_columns,
+__kernel void spmv(__global unsigned *a_row_ptrs, __global unsigned *a_columns,
                    __global double *a_vals, __global double *b,
                    __global double *c, const unsigned h_a, const unsigned w_a) {
-  int id = get_global_id(0);
+  unsigned id = get_global_id(0);
   if (id < h_a) {
-    int start = a_row_ptrs[id];
-    int end = a_row_ptrs[id + 1];
+    unsigned start = a_row_ptrs[id];
+    unsigned end = a_row_ptrs[id + 1];
     double dot = 0;
     // Add each element in the id
     for (unsigned j = start; j < end; j++)
