@@ -22,7 +22,6 @@ void lanczos_algo(unsigned *row_ptrs, unsigned *columns, double *vals,
 
     serial_mtx_col_copy(orth_vec, orth_mtx, i, size);
 
-    // serial_mtx_vec_mul(lap, orth_vec, w_vec, size, size);
     serial_spmv(row_ptrs, columns, vals, orth_vec, w_vec, size, size);
 
     alpha[i] = serial_vec_dot(orth_vec, w_vec, size);

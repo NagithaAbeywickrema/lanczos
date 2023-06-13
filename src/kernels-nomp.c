@@ -59,7 +59,7 @@ void nomp_spmv(unsigned *a_row_ptrs, unsigned *a_columns, double *a_vals,
 }
 
 void nomp_calc_w_init(double *w_vec, const double alpha, double *orth_mtx,
-                      const unsigned col_index, const int size) {
+                      const unsigned col_index, const unsigned size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (unsigned j = 0; j < size; j++) {
     w_vec[j] = w_vec[j] - alpha * orth_mtx[j + size * col_index];

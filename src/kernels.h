@@ -61,24 +61,25 @@ void cuda_calc_w(double *d_w_vec, const double alpha, double *d_orth_mtx,
 
 #if defined(ENABLE_SYCL)
 
-double sycl_mtx_norm(sycl::buffer<double> w, const int size, sycl::queue queue);
+double sycl_mtx_norm(sycl::buffer<double> w, const unsigned size,
+                     sycl::queue queue);
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
-                       sycl::buffer<double> out_buf, const int size,
+                       sycl::buffer<double> out_buf, const unsigned size,
                        sycl::queue queue);
 void sycl_mtx_col_copy(sycl::buffer<double> v_temp_buf,
-                       sycl::buffer<double> v_buf, int j, const int size,
-                       sycl::queue queue);
+                       sycl::buffer<double> v_buf, const unsigned j,
+                       const unsigned size, sycl::queue queue);
 void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
-                      sycl::buffer<double> out_buf, const int height_a,
-                      const int width_a, sycl::queue queue);
+                      sycl::buffer<double> out_buf, const unsigned height_a,
+                      const unsigned width_a, sycl::queue queue);
 double sycl_mtx_dot(sycl::buffer<double> v_buf, sycl::buffer<double> w_buf,
-                    const int size, sycl::queue queue);
+                    const unsigned size, sycl::queue queue);
 void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
-                      sycl::buffer<double> v_buf, unsigned i, const int size,
-                      sycl::queue queue);
+                      sycl::buffer<double> v_buf, unsigned i,
+                      const unsigned size, sycl::queue queue);
 void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
                  sycl::buffer<double> v_buf, double beta, unsigned i,
-                 const int size, sycl::queue queue);
+                 const unsigned size, sycl::queue queue);
 void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
                sycl::buffer<unsigned> a_columns_buf,
                sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
@@ -101,7 +102,7 @@ void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
 double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
                    cl_mem d_a_vec, cl_mem d_b_vec, const unsigned size);
 double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
-                    cl_mem d_a_vec, const int size);
+                    cl_mem d_a_vec, const unsigned size);
 void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
                       cl_mem d_a_vec, cl_mem d_out_vec, const double sclr,
                       const unsigned size);

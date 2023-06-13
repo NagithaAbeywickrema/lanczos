@@ -24,7 +24,6 @@ void lanczos_algo(unsigned *d_row_ptrs, unsigned *d_columns, double *d_vals,
 
     cuda_mtx_col_copy(d_orth_vec, d_orth_mtx, i, size);
 
-    // cuda_mtx_vec_mul(d_lap, d_orth_vec, d_w_vec, size, size);
     cuda_spmv(d_row_ptrs, d_columns, d_vals, d_orth_vec, d_w_vec, size, size);
 
     alpha[i] = cuda_vec_dot(d_orth_vec, d_w_vec, size);

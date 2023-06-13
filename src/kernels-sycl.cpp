@@ -1,8 +1,8 @@
 #include "kernels.h"
 
 void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
-                      sycl::buffer<double> out_buf, const int height_a,
-                      const int width_a, sycl::queue queue) {
+                      sycl::buffer<double> out_buf, const unsigned height_a,
+                      const unsigned width_a, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_a = a_buf.get_access<sycl::access::mode::read>(h);
@@ -19,10 +19,10 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          int id = item.get_global_id(0);
+          unsigned id = item.get_global_id(0);
           double dot = 0;
           if (id < height_a) {
-            for (int i = 0; i < width_a; i++)
+            for (unsigned i = 0; i < width_a; i++)
               dot += d_a[width_a * id + i] * d_b[i];
             d_c[id] = dot;
           }
@@ -71,7 +71,7 @@ void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
 }
 
 double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
-                    sycl::buffer<double> b_vec_buf, const int size,
+                    sycl::buffer<double> b_vec_buf, const unsigned size,
                     sycl::queue queue) {
   // Number of work items in each local work group
   size_t local_size = 256;
@@ -129,7 +129,7 @@ double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
   return result;
 }
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
-                       sycl::buffer<double> out_buf, const int size,
+                       sycl::buffer<double> out_buf, const unsigned size,
                        sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
@@ -153,8 +153,8 @@ void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
 }
 
 void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
-                      sycl::buffer<double> v_buf, unsigned i, const int size,
-                      sycl::queue queue) {
+                      sycl::buffer<double> v_buf, unsigned i,
+                      const unsigned size, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
@@ -178,7 +178,7 @@ void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
 
 void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
                  sycl::buffer<double> v_buf, double beta, unsigned i,
-                 const int size, sycl::queue queue) {
+                 const unsigned size, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
@@ -201,15 +201,15 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
   queue.wait();
 }
 
-double sycl_mtx_norm(sycl::buffer<double> w, const int size,
+double sycl_mtx_norm(sycl::buffer<double> w, const unsigned size,
                      sycl::queue queue) {
 
   return sqrt(sycl_mtx_dot(w, w, size, queue));
 }
 
 void sycl_mtx_col_copy(sycl::buffer<double> v_temp_buf,
-                       sycl::buffer<double> v_buf, int j, const int size,
-                       sycl::queue queue) {
+                       sycl::buffer<double> v_buf, const unsigned j,
+                       const unsigned size, sycl::queue queue) {
   queue.submit([&](sycl::handler &h) {
     auto d_temp_v = v_temp_buf.get_access<sycl::access::mode::read>(h);
     auto d_v = v_buf.get_access<sycl::access::mode::write>(h);

@@ -20,7 +20,6 @@ void lanczos_algo(unsigned *row_ptrs, unsigned *columns, double *vals,
 
     nomp_mtx_col_copy(orth_vec, orth_mtx, i, size);
 
-    // nomp_mtx_vec_mul(lap, orth_vec, w_vec, size, size);
     nomp_spmv(row_ptrs, columns, vals, orth_vec, w_vec, size, size);
 
     alpha[i] = nomp_vec_dot(orth_vec, w_vec, size);

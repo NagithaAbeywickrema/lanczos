@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
-                    cl_mem d_a_vec, const int size) {
+                    cl_mem d_a_vec, const unsigned size) {
   cl_int err;
   cl_kernel knl;
 
@@ -201,7 +201,7 @@ void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_w_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_orth_mtx);
   err |= clSetKernelArg(knl, 2, sizeof(double), &alpha);
-  err |= clSetKernelArg(knl, 3, sizeof(int), &col_index);
+  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &col_index);
   err |= clSetKernelArg(knl, 4, sizeof(unsigned), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
@@ -226,7 +226,7 @@ void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_orth_mtx);
   err |= clSetKernelArg(knl, 2, sizeof(double), &alpha);
   err |= clSetKernelArg(knl, 3, sizeof(double), &beta);
-  err |= clSetKernelArg(knl, 4, sizeof(int), &col_index);
+  err |= clSetKernelArg(knl, 4, sizeof(unsigned), &col_index);
   err |= clSetKernelArg(knl, 5, sizeof(unsigned), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
