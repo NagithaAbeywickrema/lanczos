@@ -50,7 +50,7 @@ void nomp_spmv(unsigned *a_row_ptrs, unsigned *a_columns, double *a_vals,
     double dot = 0;
     unsigned row_start = a_row_ptrs[row];
     unsigned row_end = a_row_ptrs[row + 1];
-    unsigned length = row_end - row_start;
+    int length = row_end - row_start;
     for (unsigned jj = 0; jj < length; jj++)
       dot += a_vals[row_start + jj] * b_vec[a_columns[row_start + jj]];
     out_vec[row] += dot;
