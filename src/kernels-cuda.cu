@@ -1,7 +1,7 @@
 #include "kernels.h"
 #include <math.h>
 
-#define BLOCK_SIZE 256
+#define BLOCK_SIZE 32
 
 __global__ void cuda_vec_dot_knl(double *a_vec, double *b_vec, double *result,
                                  const unsigned size) {
@@ -31,7 +31,14 @@ __global__ void cuda_vec_sclr_div_knl(double *a_vec, double *out_vec,
   const unsigned tid = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (tid < size)
-    out_vec[tid] = a_vec[tid] / sclr;
+    out_vec[tid] = a_vec[tid] * sclr;
+}
+
+__global__ void cuda_d2d_mem_cpy_knl(double *a, double *b, unsigned int size) {
+  const unsigned tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (tid < size)
+    b[tid] = a[tid];
 }
 
 __global__ void cuda_mtx_col_copy_knl(double *vec, double *mtx,
@@ -132,8 +139,12 @@ void cuda_vec_sclr_div(double *d_a_vec, double *d_out_vec, const double sclr,
 
   cuda_vec_sclr_div_knl<<<grid_size, BLOCK_SIZE>>>(d_a_vec, d_out_vec, sclr,
                                                    size);
+}
 
-  cudaDeviceSynchronize();
+void cuda_d2d_mem_cpy(double *a, double *b, unsigned int size) {
+  const unsigned grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+  cuda_d2d_mem_cpy_knl<<<grid_size, BLOCK_SIZE>>>(a, b, size);
 }
 
 void cuda_mtx_col_copy(double *d_vec, double *d_mtx, const unsigned col_index,
