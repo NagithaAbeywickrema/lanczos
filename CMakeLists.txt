@@ -6,8 +6,8 @@ project(
   LANGUAGES C CXX)
 
 option(ENABLE_SERIAL "Build RSB Serial" ON)
-option(ENABLE_NOMP "Build RSB Nomp" OFF)
-option(ENABLE_CUDA "Build RSB Cuda" OFF)
+option(ENABLE_NOMP "Build RSB Nomp" ON)
+option(ENABLE_CUDA "Build RSB Cuda" ON)
 option(ENABLE_SYCL "Build RSB SYCL" OFF)
 option(ENABLE_OPENCL "Build RSB OpenCL" ON)
 option(ENABLE_BENCH "Bench kernels" ON)
@@ -118,6 +118,8 @@ if(ENABLE_BENCH)
         src/lanczos-aux.c
         src/kernels-nomp.c
         src/lanczos-aux.h
+        src/matrix-util.h
+        src/matrix-util.c
         src/print-helper.h)
     add_executable(nomp-bench ${SOURCES})
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
@@ -136,6 +138,8 @@ if(ENABLE_BENCH)
       src/lanczos-aux.c
       src/kernels-ocl.c
       src/lanczos-aux.h
+      src/matrix-util.h
+      src/matrix-util.c
       src/print-helper.h)
     add_executable(ocl-bench ${SOURCES})
     target_compile_definitions(ocl-bench PRIVATE ENABLE_BENCH ENABLE_OPENCL)
@@ -154,6 +158,8 @@ if(ENABLE_BENCH)
         src/lanczos-aux.c
         src/kernels-cuda.cu
         src/lanczos-aux.h
+        src/matrix-util.h
+        src/matrix-util.c
         src/print-helper.h)
     add_executable(cuda-bench ${SOURCES})
     target_compile_definitions(cuda-bench PRIVATE ENABLE_BENCH)

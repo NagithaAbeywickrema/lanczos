@@ -9,7 +9,7 @@ void lanczos_algo(unsigned *row_ptrs, unsigned *columns, double *vals,
     beta[i] = nomp_vec_norm(w_vec, size);
 
     if (fabs(beta[i] - 0) > EPS) {
-      nomp_vec_sclr_div(w_vec, orth_vec, beta[i], size);
+      nomp_vec_sclr_div(w_vec, orth_vec, 1/beta[i], size);
     } else {
       for (unsigned i = 0; i < size; i++)
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);

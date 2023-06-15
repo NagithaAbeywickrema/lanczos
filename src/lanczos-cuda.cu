@@ -12,14 +12,14 @@ void lanczos_algo(unsigned *d_row_ptrs, unsigned *d_columns, double *d_vals,
     beta[i] = cuda_vec_norm(d_w_vec, size);
 
     if (fabs(beta[i] - 0) > 1e-8) {
-      cuda_vec_sclr_div(d_w_vec, d_orth_vec, beta[i], size);
+      cuda_vec_sclr_div(d_w_vec, d_orth_vec, 1/beta[i], size);
     } else {
       for (unsigned i = 0; i < size; i++)
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       cudaMemcpy(d_orth_vec, orth_vec, (size) * sizeof(double),
                  cudaMemcpyHostToDevice);
       double norm_val = cuda_vec_norm(d_orth_vec, size);
-      cuda_vec_sclr_div(d_orth_vec, d_orth_vec, norm_val, size);
+      cuda_vec_sclr_div(d_orth_vec, d_orth_vec, 1/norm_val, size);
     }
 
     cuda_mtx_col_copy(d_orth_vec, d_orth_mtx, i, size);
