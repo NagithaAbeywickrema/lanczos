@@ -41,6 +41,8 @@ void nomp_calc_w(double *w_vec, const double alpha, double *orth_mtx,
                  const double beta, const unsigned col_index,
                  const unsigned size);
 void nomp_d2d_mem_cpy(double *a, double *b, unsigned int N);
+void nomp_vec_add(double *a_vec, double *b_vec, double *out_vec,
+                  const unsigned size);
 
 // Parallelized functions of Lanczos routine implemented using Cuda.
 double cuda_vec_dot(double *d_a_vec, double *d_b_vec, const unsigned size);
@@ -59,6 +61,7 @@ void cuda_calc_w_init(double *d_w_vec, const double alpha, double *d_orth_mtx,
 void cuda_calc_w(double *d_w_vec, const double alpha, double *d_orth_mtx,
                  const double beta, const unsigned col_index,
                  const unsigned size);
+void cuda_d2d_mem_cpy(double *a, double *b, unsigned int N);
 
 #if defined(ENABLE_SYCL)
 
@@ -124,6 +127,8 @@ void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
                 cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
                 const double beta, const unsigned col_index,
                 const unsigned size);
+void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
+                     cl_mem d_a_vec, cl_mem d_out_vec, const unsigned size);
 #endif
 
 #ifdef __cplusplus

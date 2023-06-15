@@ -18,6 +18,8 @@ double *create_host_vec(const unsigned size) {
 }
 
 unsigned inc(const unsigned i) {
+    return (unsigned)(1.01 * i);
+    return i + 1;
   if (i < 1000)
     return i + 1;
   else
@@ -38,8 +40,8 @@ FILE *open_file(const char *suffix) {
 }
 
 void vec_norm_bench() {
-    // FILE *fp = open_file("vec-norm-lsize");
-    for(unsigned i = 1; i < 5; i = inc(i)) {
+    FILE *fp = open_file("vec-norm");
+    for(unsigned i = 1e4; i < 1e6; i = inc(i)) {
         double *h_a = create_host_vec(i);
         #pragma nomp update(to: h_a[0, i])
 
@@ -52,16 +54,52 @@ void vec_norm_bench() {
             nomp_vec_norm(h_a, i);
         t = clock() - t;
 
-        // fprintf(fp, "%s,%s,%u,%e\n", "vec-norm","nomp", i, (double)t / (CLOCKS_PER_SEC*1000));
+        fprintf(fp, "%s,%s,%u,%e\n", "vec-norm","nomp",i, (double)t / (CLOCKS_PER_SEC*1000));
         #pragma nomp update(free: h_a[0, i])
         tfree(&h_a);
     }
-    // fclose(fp);
+    fclose(fp);
+}
+
+void vec_dot_bench() {
+    FILE *fp = open_file("vec-dot-prod-01");
+    for(unsigned i = 1e4; i < 1e7; i = inc(i)) {
+        double *h_a = create_host_vec(i);
+        double *h_b = create_host_vec(i);
+        double *h_c = create_host_vec(32);
+        #pragma nomp update(to: h_a[0, i], h_b[0, i],h_c[0,32])
+
+        //Warmup d2d
+        for(int j = 0; j< 1000; j++)
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+
+        // Warmup
+        for(int j = 0; j< 1000; j++)
+            nomp_vec_dot(h_a, h_b, i);
+
+        clock_t t1 = clock();
+        for(int j=0; j <1000; j++){
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+        }
+        #pragma nomp update(from: h_c[0, 32])
+        t1 = clock() - t1;
+
+        clock_t t = clock();
+        for (int j=0; j < 1000; j++)
+            nomp_vec_dot(h_a, h_b, i);
+        t = clock() - t;
+
+        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-dot-prod","nomp", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
+        #pragma nomp update(free: h_a[0, i], h_b[0, i])
+        tfree(&h_a), tfree(&h_b);
+    }
+    fclose(fp);
 }
 
 void vec_sclr_div_bench() {
-    FILE *fp = open_file("vec-sclr-div");
-    for(unsigned i =1; i < 1e6; i = inc(i)) {
+    FILE *fp = open_file("vec-sclr-mul-sync");
+    for(unsigned i =1e4; i < 1e7; i = inc(i)) {
         double *h_a = create_host_vec(i);
         double *h_b = (double *)malloc(sizeof(double) * i);
         #pragma nomp update(to: h_a[0, i])
@@ -70,14 +108,54 @@ void vec_sclr_div_bench() {
         //Warmup d2d
         for(int j = 0; j< 1000; j++)
             nomp_d2d_mem_cpy(h_a, h_b, i);
+  #pragma nomp sync
+        //Warmup
+        for(int j = 0; j< 1000; j++)
+            nomp_vec_sclr_div(h_a, h_b, 1/10, i);
+  #pragma nomp sync
+        clock_t t1 = clock();
+        for(int j=0; j <1000; j++)
+            nomp_d2d_mem_cpy(h_a, h_b, i);
+      #pragma nomp sync
+        t1 = clock() - t1;
+
+        clock_t t = clock();
+        for (int j=0; j < 1000; j++)
+            nomp_vec_sclr_div(h_a, h_b, 1/10, i);
+    #pragma nomp sync
+        t = clock() - t;
+
+        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-mul","nomp", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
+        // fprintf(fp, "%s,%s,%u,%e\n", "vec-sclr-div","nomp",i, (double)t / (CLOCKS_PER_SEC*1000));
+        #pragma nomp update(free: h_a[0, i], h_b[0,i])
+        tfree(&h_a);
+        free(h_b);
+    }
+    fclose(fp);
+}
+
+
+void vec_add_bench() {
+    FILE *fp = open_file("vec-add");
+    for(unsigned i =1e4; i < 1e7; i = inc(i)) {
+        double *h_a = create_host_vec(i);
+        double *h_c = create_host_vec(i);
+        double *h_b = (double *)malloc(sizeof(double) * i);
+        #pragma nomp update(to: h_a[0, i], h_c[0,i])
+        #pragma nomp update(alloc: h_b[0, i])
+
+        //Warmup d2d
+        for(int j = 0; j< 1000; j++)
+            nomp_d2d_mem_cpy(h_a, h_b, i);
 
         //Warmup
         for(int j = 0; j< 1000; j++)
-            nomp_vec_sclr_div(h_a, h_b, 10, i);
+            nomp_vec_add(h_a, h_b, h_c, i);
 
         clock_t t1 = clock();
         for(int j=0; j <1000; j++)
             nomp_d2d_mem_cpy(h_a, h_b, i);
+        
         t1 = clock() - t1;
 
         clock_t t = clock();
@@ -85,7 +163,8 @@ void vec_sclr_div_bench() {
             nomp_vec_sclr_div(h_a, h_b, 10, i);
         t = clock() - t;
 
-        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div","nomp", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
+        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div-15","nomp", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
+        // fprintf(fp, "%s,%s,%u,%e\n", "vec-sclr-div","nomp",i, (double)t / (CLOCKS_PER_SEC*1000));
         #pragma nomp update(free: h_a[0, i], h_b[0,i])
         tfree(&h_a);
         free(h_b);
@@ -120,7 +199,7 @@ void mtx_col_copy_bench() {
 
 void calc_w_bench() {
     FILE *fp = open_file("calc-w");
-    for(unsigned i =2; i<1e5; i = inc(i)) {
+    for(unsigned i =100; i<1e7; i = inc(i)) {
         double *h_a = create_host_vec(i);
         double *h_b = create_host_vec(i*i);
 
@@ -145,6 +224,7 @@ void lanczos_bench(int argc, char *argv[]) {
     #pragma nomp init(argc, argv)
     vec_sclr_div_bench();
     // vec_norm_bench();
+    // vec_dot_bench();
     // calc_w_bench();
     #pragma nomp finalize
 }
