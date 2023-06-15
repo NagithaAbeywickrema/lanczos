@@ -75,6 +75,26 @@ void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
   clReleaseKernel(knl);
 }
 
+void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
+                     cl_mem d_a_vec, cl_mem d_out_vec, const unsigned size) {
+  cl_int err;
+  cl_kernel knl;
+
+  size_t local_size = 32,
+         global_size = ((size + local_size - 1) / local_size) * local_size;
+
+  knl = clCreateKernel(prg, "d2d_mem_cpy", &err);
+
+  err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_out_vec);
+  err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_a_vec);
+  err |= clSetKernelArg(knl, 2, sizeof(unsigned), &size);
+
+  err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
+                               0, NULL, NULL);
+  clFinish(queue);
+  clReleaseKernel(knl);
+}
+
 void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
                       cl_mem d_vec, cl_mem d_mtx, const unsigned col_index,
                       const unsigned size) {

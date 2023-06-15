@@ -31,6 +31,7 @@ double *create_host_vec(const unsigned size) {
 }
 
 unsigned inc(const unsigned i) {
+  return (unsigned)(1.01 * i);
   if (i < 1000)
     return i + 1;
   else
@@ -52,7 +53,7 @@ FILE *open_file(const char *suffix) {
 
 void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("vec-norm");
-  for(unsigned i = 1; i< 1e6; i= inc(i)) {
+  for(unsigned i = 1e4; i< 1e6; i= inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -78,8 +79,8 @@ void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
 }
 
 void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
-  FILE *fp = open_file("vec-sclr-div");
-  for(unsigned i = 1; i< 1e6; i= inc(i)) {
+  FILE *fp = open_file("vec-sclr-div-ocl");
+  for(unsigned i = 1e4; i< 1e7; i= inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -92,14 +93,23 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue, cl_program prg) 
     
     // Warmup
     for(int j=0; j<1000; j++)
-      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 10, i);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1/10, i);
+
+    for(int j=0; j <1000; j++)
+            ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
+
+     clock_t t1 = clock();
+        for(int j=0; j <1000; j++)
+            ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
+        t1 = clock() - t1;
+
 
     clock_t t = clock();
     for (int j=0; j < 1000; j++)
-      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 10, i);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1/10, i);
     t = clock() - t;
 
-    fprintf(fp, "%s,%s,%u,%e\n", "vec-sclr-div","ocl",i, (double)t / (CLOCKS_PER_SEC*1000));
+        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div","ocl", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
     clReleaseMemObject(d_a), clReleaseMemObject(d_b);
     tfree(&h_a); 
   }
@@ -137,7 +147,7 @@ void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue, cl_program prg) 
 
 void calc_w_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("calc-w");
-  for(unsigned i = 2; i< 1e5; i= inc(i)) {
+  for(unsigned i = 1e4; i< 1e7; i= inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -211,7 +221,7 @@ void lanczos_bench(int argc, char *argv[]) {
   char *kernelSource;
   size_t kernelSize;
 
-  kernelFile = fopen("/home/ravindu/Desktop/spmv/lanczos/src/kernels.cl", "r");
+  kernelFile = fopen("/home/pubudu/nomp/lanczos/src/kernels.cl", "r");
 
   if (kernelFile == NULL) {
     fprintf(stderr, "No file named kernels.cl was found\n");
@@ -226,9 +236,9 @@ void lanczos_bench(int argc, char *argv[]) {
 
   // bench
   // vec_norm_bench(context, queue, program);
-  // vec_sclr_div_bench(context, queue, program);
+  vec_sclr_div_bench(context, queue, program);
   // mtx_col_copy_bench(context, queue, program);
-  calc_w_bench(context, queue, program);
+  // calc_w_bench(context, queue, program);
 
   clReleaseProgram(program);
   clReleaseCommandQueue(queue);
