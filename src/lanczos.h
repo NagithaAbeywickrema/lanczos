@@ -5,7 +5,7 @@
 #include <time.h>
 
 #define MAX 1000000
-#define EPS 1e-12
+#define EPS 1e-8
 #define TRIALS 2
 
 #ifdef __cplusplus

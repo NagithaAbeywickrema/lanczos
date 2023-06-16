@@ -1,8 +1,8 @@
 #include "bench.h"
 
 void vec_sclr_mul_bench() {
-  FILE *fp = open_file("vec-sclr-mul-cuda");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_sclr_mul_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -38,13 +38,16 @@ void vec_sclr_mul_bench() {
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-mul", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
     tfree(&h_a);
+    tfree(&w_vec);
+    tfree(&out);
+    
   }
   fclose(fp);
 }
 
 void vec_sclr_div_bench() {
-  FILE *fp = open_file("vec-sclr-div-cuda");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_sclr_div_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -80,13 +83,15 @@ void vec_sclr_div_bench() {
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-div", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
     tfree(&h_a);
+    tfree(&w_vec);
+    tfree(&out);
   }
   fclose(fp);
 }
 
 void calc_w_bench() {
-  FILE *fp = open_file("calc_w_cuda");
-  for (int i = 1e2; i < 3.7e4; i = inc(i)) {
+  FILE *fp = open_file("lanczos_calc_w_data");
+  for (int i = 1e2; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
 
@@ -124,13 +129,14 @@ void calc_w_bench() {
             (double)t / (CLOCKS_PER_SEC * TRAILS));
     tfree(&h_a);
     tfree(&h_b);
+    tfree(&out);
   }
   fclose(fp);
 }
 
 void vec_norm_bench() {
-  FILE *fp = open_file("vec-norm");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_norm_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a;
 
@@ -164,8 +170,8 @@ void vec_norm_bench() {
 }
 
 void vec_dot_bench() {
-  FILE *fp = open_file("vec-dot");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_dot_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *d_a, *d_b;
@@ -204,8 +210,8 @@ void vec_dot_bench() {
 }
 
 void mtx_col_copy_bench() {
-  FILE *fp = open_file("mtx-col-copy");
-  for (int i = 1e2; i < 3.7e4; i = inc(i)) {
+  FILE *fp = open_file("lanczos_mtx_col_copy_data");
+  for (int i = 1e2; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a, *d_b;
     cudaMalloc((void **)&d_a, i * sizeof(double));
@@ -239,13 +245,15 @@ void mtx_col_copy_bench() {
 
     cudaFree(d_a), cudaFree(d_b);
     tfree(&h_a);
+    tfree(&mtx);
+    tfree(&out);
   }
   fclose(fp);
 }
 
 void create_roofline() {
   FILE *fp = open_file("roofline_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -280,12 +288,13 @@ void create_roofline() {
     fprintf(fp, "%s,%s,%u,%u,%e\n", "roofline", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
     tfree(&h_a);
+    tfree(&out);
   }
   fclose(fp);
 }
 
 void spmv_bench() {
-  FILE *fp = open_file("spmv_data");
+  FILE *fp = open_file("lanczos_spmv_data");
   for (int i = 1e2; i < 1e4; i = inc(i)) {
     double *lap, *vals, *h_orth_vec;
     int *row_ptrs, *columns, val_count;
@@ -348,6 +357,8 @@ void spmv_bench() {
     tfree(&row_ptrs);
     tfree(&columns);
     tfree(&h_orth_vec);
+    tfree(&w_vec);
+    tfree(&out);
   }
   fclose(fp);
 }

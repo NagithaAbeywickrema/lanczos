@@ -2,7 +2,7 @@
 #include <assert.h>
 
 void vec_norm_bench() {
-  FILE *fp = open_file("vec-norm");
+  FILE *fp = open_file("lanczos_vec_norm_data");
   for (int i = 1e4; i < 1e6; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double s_norm = serial_vec_norm(h_a, i);
@@ -28,8 +28,8 @@ void vec_norm_bench() {
 }
 
 void vec_dot_bench() {
-  FILE *fp = open_file("vec-dot-prod-01");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_dot_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double s_dot = serial_vec_dot(h_a, h_b, i);
@@ -55,12 +55,12 @@ void vec_dot_bench() {
 }
 
 void vec_sclr_mul_bench() {
-  FILE *fp = open_file("vec-sclr-mul");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_sclr_mul_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
     double *h_c = (double *)malloc(sizeof(double) * i);
-    serial_vec_sclr_div(h_a, h_c, 10, i);
+    serial_vec_sclr_mul(h_a, h_c, 1/10, i);
 #pragma nomp update(to : h_a[0, i])
 #pragma nomp update(to : h_b[0, i])
 
@@ -90,8 +90,8 @@ void vec_sclr_mul_bench() {
 }
 
 void vec_sclr_div_bench() {
-  FILE *fp = open_file("vec-sclr-div");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_sclr_div_data");
+  for (int i = 1e4; i < 1e5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
     double *h_c = (double *)malloc(sizeof(double) * i);
@@ -126,8 +126,8 @@ void vec_sclr_div_bench() {
 }
 
 void mtx_col_copy_bench() {
-  FILE *fp = open_file("mtx-col-copy");
-  for (int i = 100; i < 3e4; i = inc(i)) {
+  FILE *fp = open_file("lanczos_mtx_col_copy_data");
+  for (int i = 100; i < 1e4; i = inc(i)) {
     double *h_a = (double *)calloc(i * i, sizeof(double));
     double *h_b = create_host_vec(i);
     double *h_c = (double *)calloc(i * i, sizeof(double));
@@ -158,8 +158,8 @@ void mtx_col_copy_bench() {
 }
 
 void calc_w_bench() {
-  FILE *fp = open_file("calc-w");
-  for (int i = 1e2; i < 3.7e4; i = inc(i)) {
+  FILE *fp = open_file("lanczos_calc_w_data");
+  for (int i = 1e2; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
     double *h_c = h_a;
@@ -183,12 +183,12 @@ void calc_w_bench() {
     fprintf(fp, "%s,%s,%u,%e\n", "calc-w", "nomp", i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i], h_b[0, i * i])
-    tfree(&h_a), tfree(&h_b), free(h_c);
+    tfree(&h_a), tfree(&h_b);
   }
 }
 
 void spmv_bench() {
-  FILE *fp = open_file("spmv_data");
+  FILE *fp = open_file("lanczos_spmv_data");
   for (int i = 1e2; i < 1e4; i = inc(i)) {
     double *lap, *vals, *h_orth_vec;
     int *row_ptrs, *columns, val_count;
@@ -232,10 +232,10 @@ void lanczos_bench(int argc, char *argv[]) {
 #pragma nomp init(argc, argv)
   // vec_sclr_mul_bench();
   // vec_sclr_div_bench();
-  spmv_bench();
-  // vec_norm_bench();
-  // vec_dot_bench();
   // calc_w_bench();
-// mtx_col_copy_bench();
+  // vec_norm_bench();
+  vec_dot_bench();
+  mtx_col_copy_bench();
+  spmv_bench();
 #pragma nomp finalize
 }
