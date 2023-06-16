@@ -31,11 +31,11 @@ double *create_host_vec(const unsigned size) {
 }
 
 unsigned inc(const unsigned i) {
-  return (unsigned)(1.01 * i);
-  if (i < 1000)
-    return i + 1;
-  else
-    return (unsigned)(1.03 * i);
+  return i + 1;
+  // return (unsigned)(1.01 * i);
+  // if (i < 1000)
+  // else
+  //   return (unsigned)(1.03 * i);
 }
 
 FILE *open_file(const char *suffix) {
@@ -82,10 +82,14 @@ void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
 void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
                         cl_program prg) {
   FILE *fp = open_file("vec-sclr-div-ocl");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (unsigned i = 1; i < 5; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
+    double *h_b = (double *)malloc(sizeof(double) * i);
+    double *h_c = (double *)malloc(sizeof(double) * i);
+
+    serial_vec_sclr_div(h_a, h_c, 10, i);
     cl_mem d_a =
         clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
     cl_mem d_b =
@@ -110,6 +114,11 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
       ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1 / 10, i);
     t = clock() - t;
 
+    err = clEnqueueReadBuffer(queue, d_b, CL_TRUE, 0, i * sizeof(double), h_b, 0, NULL, NULL);
+    for(int k=0; k< i; k++){
+      printf("h_b[%d]: %f \n", k, h_b[k]);
+    }
+
     fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div", "ocl", 32, i,
             (double)t1 / (CLOCKS_PER_SEC * 1000),
             (double)t / (CLOCKS_PER_SEC * 1000));
@@ -122,7 +131,7 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
 void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
                         cl_program prg) {
   FILE *fp = open_file("mtx-col-copy");
-  for (unsigned i = 1; i < 1e4; i = inc(i)) {
+  for (unsigned i = 100; i < 1e4; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -135,11 +144,11 @@ void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
 
     // Warmup
     for (int j = 0; j < 1000; j++)
-      ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, 0, i);
+      ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, i - 1, i);
 
     clock_t t = clock();
     for (int j = 0; j < 1000; j++)
-      ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, 0, i);
+      ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, i - 1, i);
     t = clock() - t;
 
     fprintf(fp, "%s,%s,%u,%e\n", "mtx-col-copy", "ocl", i,
@@ -152,7 +161,7 @@ void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
 
 void calc_w_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("calc-w");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (unsigned i = 100; i < 1e4; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -168,11 +177,11 @@ void calc_w_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
 
     // Warmup
     for (int j = 0; j < 1000; j++)
-      ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, 1, i);
+      ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, i - 1, i);
 
     clock_t t = clock();
     for (int j = 0; j < 1000; j++)
-      ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, 1, i);
+      ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, i - 1, i);
     t = clock() - t;
 
     fprintf(fp, "%s,%s,%u,%e\n", "calc-w", "ocl", i,

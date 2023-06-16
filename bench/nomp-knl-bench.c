@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #define tcalloc(T, n) (T *)calloc(n, sizeof(T))
 #define tfree(p) free_((void **)p)
@@ -18,8 +19,8 @@ double *create_host_vec(const unsigned size) {
 }
 
 unsigned inc(const unsigned i) {
-  return (unsigned)(1.01 * i);
   return i + 1;
+  // return (unsigned)(1.01 * i);
   if (i < 1000)
     return i + 1;
   else
@@ -102,20 +103,25 @@ void vec_dot_bench() {
 
 void vec_sclr_div_bench() {
   FILE *fp = open_file("vec-sclr-mul-sync");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (unsigned i = 1; i < 5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
+    double *h_c = (double *)malloc(sizeof(double) * i);
+
+    serial_vec_sclr_div(h_a, h_c, 10, i);
 #pragma nomp update(to : h_a[0, i])
-#pragma nomp update(alloc : h_b[0, i])
+#pragma nomp update(to : h_b[0, i])
 
     // Warmup d2d
     for (int j = 0; j < 1000; j++)
       nomp_d2d_mem_cpy(h_a, h_b, i);
 #pragma nomp sync
+
     // Warmup
     for (int j = 0; j < 1000; j++)
       nomp_vec_sclr_div(h_a, h_b, 1 / 10, i);
 #pragma nomp sync
+
     clock_t t1 = clock();
     for (int j = 0; j < 1000; j++)
       nomp_d2d_mem_cpy(h_a, h_b, i);
@@ -128,11 +134,16 @@ void vec_sclr_div_bench() {
 #pragma nomp sync
     t = clock() - t;
 
+    #pragma nomp update(from: h_b[0,i], h_a[0, i])
+    for(unsigned k=0; k < i; k++){
+      printf("h_b[%d]: %f, h_a[%d]: %f \n", k, h_b[k], k, h_a[k]);
+    }
+      // assert(fabs(h_b[k] - h_c[k])<10e-8);
+
     fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-mul", "nomp", 32, i,
             (double)t1 / (CLOCKS_PER_SEC * 1000),
             (double)t / (CLOCKS_PER_SEC * 1000));
-// fprintf(fp, "%s,%s,%u,%e\n", "vec-sclr-div","nomp",i, (double)t /
-// (CLOCKS_PER_SEC*1000));
+
 #pragma nomp update(free : h_a[0, i], h_b[0, i])
     tfree(&h_a);
     free(h_b);
@@ -182,7 +193,7 @@ void vec_add_bench() {
 
 void mtx_col_copy_bench() {
   FILE *fp = open_file("mtx-col-copy");
-  for (unsigned i = 1; i < 1e4; i = inc(i)) {
+  for (unsigned i = 100; i < 1e4; i = inc(i)) {
     double *h_a = (double *)calloc(i * i, sizeof(double));
     double *h_b = create_host_vec(i);
 
@@ -191,11 +202,11 @@ void mtx_col_copy_bench() {
 
     // Warmup
     for (int j = 0; j < 1000; j++)
-      nomp_mtx_col_copy(h_b, h_a, 0, i); // col_index
+      nomp_mtx_col_copy(h_b, h_a, i - 1, i); // col_index
 
     clock_t t = clock();
     for (int j = 0; j < 1000; j++)
-      nomp_mtx_col_copy(h_b, h_a, 0, i);
+      nomp_mtx_col_copy(h_b, h_a, i - 1, i);
     t = clock() - t;
 
     fprintf(fp, "%s,%s,%u,%e\n", "mtx-col-copy", "nomp", i,
@@ -208,7 +219,7 @@ void mtx_col_copy_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("calc-w");
-  for (unsigned i = 100; i < 1e7; i = inc(i)) {
+  for (unsigned i = 100; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
 
@@ -216,11 +227,11 @@ void calc_w_bench() {
 
     // Warmup
     for (int j = 0; j < 1000; j++)
-      nomp_calc_w(h_a, 2, h_b, 2, 1, i); // col_index
+      nomp_calc_w(h_a, 2, h_b, 2, i - 1, i); // col_index
 
     clock_t t = clock();
     for (int j = 0; j < 1000; j++)
-      nomp_calc_w(h_a, 2, h_b, 2, 1, i);
+      nomp_calc_w(h_a, 2, h_b, 2, i - 1, i);
     t = clock() - t;
 
     fprintf(fp, "%s,%s,%u,%e\n", "calc-w", "nomp", i,
@@ -236,5 +247,6 @@ void lanczos_bench(int argc, char *argv[]) {
 // vec_norm_bench();
 // vec_dot_bench();
 // calc_w_bench();
+// mtx_col_copy_bench();
 #pragma nomp finalize
 }
