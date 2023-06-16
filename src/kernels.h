@@ -47,8 +47,10 @@ void nomp_vec_add(double *a_vec, double *b_vec, double *out_vec,
 // Parallelized functions of Lanczos routine implemented using Cuda.
 double cuda_vec_dot(double *d_a_vec, double *d_b_vec, const unsigned size);
 double cuda_vec_norm(double *d_a_vec, const unsigned size);
+void cuda_vec_sclr_mul(double *d_a_vec, double *d_out_vec, const double sclr,
+                       const unsigned size,const unsigned grid_size, const unsigned block_size);
 void cuda_vec_sclr_div(double *d_a_vec, double *d_out_vec, const double sclr,
-                       const unsigned size);
+                       const unsigned size,const unsigned grid_size, const unsigned block_size) ;
 void cuda_mtx_col_copy(double *d_vec, double *d_mtx, const unsigned col_index,
                        const unsigned size);
 void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
@@ -60,8 +62,8 @@ void cuda_calc_w_init(double *d_w_vec, const double alpha, double *d_orth_mtx,
                       const unsigned col_index, const unsigned size);
 void cuda_calc_w(double *d_w_vec, const double alpha, double *d_orth_mtx,
                  const double beta, const unsigned col_index,
-                 const unsigned size);
-void cuda_d2d_mem_cpy(double *a, double *b, unsigned int N);
+                 const unsigned size,const unsigned grid_size, const unsigned block_size) ;
+void cuda_d2d_mem_cpy(double *a, double *b, unsigned int size,const unsigned grid_size, const unsigned block_size); 
 
 #if defined(ENABLE_SYCL)
 

@@ -7,12 +7,12 @@
 #include <CL/cl.h>
 #endif
 
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include <stdio.h>
-#include <string.h>
 #include "../src/kernels.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #define MAX 10
 #define EPS 1e-12
@@ -26,7 +26,7 @@ double *create_host_vec(const unsigned size) {
   double *x = tcalloc(double, size);
   for (unsigned i = 0; i < size; i++)
     x[i] = (rand() + 1.0) / RAND_MAX;
-    
+
   return x;
 }
 
@@ -53,133 +53,138 @@ FILE *open_file(const char *suffix) {
 
 void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("vec-norm");
-  for(unsigned i = 1e4; i< 1e6; i= inc(i)) {
+  for (unsigned i = 1e4; i < 1e6; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
-    cl_mem d_a = clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double),
-                           NULL, NULL);
-    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double),
-                             h_a, 0, NULL, NULL);
-    
+    cl_mem d_a =
+        clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
+    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double), h_a,
+                               0, NULL, NULL);
+
     // Warmup
-    for(int j=0; j<1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_vec_norm(ctx, queue, prg, d_a, i);
 
     clock_t t = clock();
-    for (int j=0; j < 1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_vec_norm(ctx, queue, prg, d_a, i);
     t = clock() - t;
 
-    fprintf(fp, "%s,%s,%u,%e\n", "vec-norm","ocl",i, (double)t / (CLOCKS_PER_SEC*1000));
+    fprintf(fp, "%s,%s,%u,%e\n", "vec-norm", "ocl", i,
+            (double)t / (CLOCKS_PER_SEC * 1000));
     clReleaseMemObject(d_a);
-    tfree(&h_a); 
+    tfree(&h_a);
   }
-  fclose(fp);    
+  fclose(fp);
 }
 
-void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
+void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
+                        cl_program prg) {
   FILE *fp = open_file("vec-sclr-div-ocl");
-  for(unsigned i = 1e4; i< 1e7; i= inc(i)) {
+  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
-    cl_mem d_a = clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double),
-                           NULL, NULL);
-    cl_mem d_b = clCreateBuffer(ctx, CL_MEM_WRITE_ONLY, i * sizeof(double),
-                           NULL, NULL);
-    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double),
-                             h_a, 0, NULL, NULL);
-    
+    cl_mem d_a =
+        clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
+    cl_mem d_b =
+        clCreateBuffer(ctx, CL_MEM_WRITE_ONLY, i * sizeof(double), NULL, NULL);
+    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double), h_a,
+                               0, NULL, NULL);
+
     // Warmup
-    for(int j=0; j<1000; j++)
-      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1/10, i);
+    for (int j = 0; j < 1000; j++)
+      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1 / 10, i);
 
-    for(int j=0; j <1000; j++)
-            ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
+    for (int j = 0; j < 1000; j++)
+      ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
 
-     clock_t t1 = clock();
-        for(int j=0; j <1000; j++)
-            ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
-        t1 = clock() - t1;
-
+    clock_t t1 = clock();
+    for (int j = 0; j < 1000; j++)
+      ocl_d2d_mem_cpy(ctx, queue, prg, d_a, d_b, i);
+    t1 = clock() - t1;
 
     clock_t t = clock();
-    for (int j=0; j < 1000; j++)
-      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1/10, i);
+    for (int j = 0; j < 1000; j++)
+      ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1 / 10, i);
     t = clock() - t;
 
-        fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div","ocl", 32, i, (double)t1 / (CLOCKS_PER_SEC*1000),(double)t / (CLOCKS_PER_SEC*1000));
+    fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div", "ocl", 32, i,
+            (double)t1 / (CLOCKS_PER_SEC * 1000),
+            (double)t / (CLOCKS_PER_SEC * 1000));
     clReleaseMemObject(d_a), clReleaseMemObject(d_b);
-    tfree(&h_a); 
+    tfree(&h_a);
   }
-  fclose(fp);    
+  fclose(fp);
 }
 
-void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
+void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
+                        cl_program prg) {
   FILE *fp = open_file("mtx-col-copy");
-  for(unsigned i = 1; i< 1e4; i= inc(i)) {
+  for (unsigned i = 1; i < 1e4; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
-    cl_mem d_a = clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double),
-                           NULL, NULL);
+    cl_mem d_a =
+        clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
     cl_mem d_b = clCreateBuffer(ctx, CL_MEM_WRITE_ONLY, i * i * sizeof(double),
-                           NULL, NULL);
-    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double),
-                             h_a, 0, NULL, NULL);
-    
+                                NULL, NULL);
+    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double), h_a,
+                               0, NULL, NULL);
+
     // Warmup
-    for(int j=0; j<1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, 0, i);
 
     clock_t t = clock();
-    for (int j=0; j < 1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_mtx_col_copy(ctx, queue, prg, d_a, d_b, 0, i);
     t = clock() - t;
 
-    fprintf(fp, "%s,%s,%u,%e\n", "mtx-col-copy","ocl",i, (double)t / (CLOCKS_PER_SEC*1000));
+    fprintf(fp, "%s,%s,%u,%e\n", "mtx-col-copy", "ocl", i,
+            (double)t / (CLOCKS_PER_SEC * 1000));
     clReleaseMemObject(d_a), clReleaseMemObject(d_b);
-    tfree(&h_a); 
+    tfree(&h_a);
   }
-  fclose(fp);    
+  fclose(fp);
 }
 
 void calc_w_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("calc-w");
-  for(unsigned i = 1e4; i< 1e7; i= inc(i)) {
+  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
-    double *h_b = create_host_vec(i*i);
-    cl_mem d_a = clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double),
-                           NULL, NULL);
+    double *h_b = create_host_vec(i * i);
+    cl_mem d_a =
+        clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
     cl_mem d_b = clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * i * sizeof(double),
-                           NULL, NULL);
-    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double),
-                             h_a, 0, NULL, NULL);
+                                NULL, NULL);
+    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0, i * sizeof(double), h_a,
+                               0, NULL, NULL);
     err = clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0, i * i * sizeof(double),
-                             h_b, 0, NULL, NULL);
-    
+                               h_b, 0, NULL, NULL);
+
     // Warmup
-    for(int j=0; j<1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, 1, i);
 
     clock_t t = clock();
-    for (int j=0; j < 1000; j++)
+    for (int j = 0; j < 1000; j++)
       ocl_calc_w(ctx, queue, prg, d_a, 2, d_b, 2, 1, i);
     t = clock() - t;
 
-    fprintf(fp, "%s,%s,%u,%e\n", "calc-w","ocl",i, (double)t / (CLOCKS_PER_SEC*1000));
+    fprintf(fp, "%s,%s,%u,%e\n", "calc-w", "ocl", i,
+            (double)t / (CLOCKS_PER_SEC * 1000));
     clReleaseMemObject(d_a), clReleaseMemObject(d_b);
-    tfree(&h_a), tfree(&h_b); 
+    tfree(&h_a), tfree(&h_b);
   }
-  fclose(fp);    
+  fclose(fp);
 }
 
-
 void lanczos_bench(int argc, char *argv[]) {
-    cl_context context;
+  cl_context context;
   cl_command_queue queue;
   cl_program program;
   cl_kernel kernel;
