@@ -21,7 +21,7 @@ int tqli(double *eVectors, double *eValues, int n, double *diagonal,
   e[n - 1] = 0.0;
 
   for (i = 0; i < n; i++) {
-    for (unsigned int j = 0; j < n; j++)
+    for (int j = 0; j < n; j++)
       eVectors[i * n + j] = 0;
     eVectors[i * n + i] = 1;
   }
@@ -106,12 +106,12 @@ int tqli(double *eVectors, double *eValues, int n, double *diagonal,
 
   for (k = 0; k < n; k++) {
     e[k] = 0;
-    for (unsigned int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
       e[k] += eVectors[k * n + i] * eVectors[k * n + i];
     if (e[k] > 0.0)
       e[k] = sqrt(fabs(e[k]));
     double scale = 1.0 / e[k];
-    for (unsigned int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
       eVectors[k * n + i] *= scale;
   }
 

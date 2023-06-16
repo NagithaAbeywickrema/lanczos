@@ -9,7 +9,7 @@ option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" OFF)
 option(ENABLE_CUDA "Build RSB Cuda" OFF)
 option(ENABLE_SYCL "Build RSB SYCL" OFF)
-option(ENABLE_OPENCL "Build RSB OpenCL" OFF)
+option(ENABLE_OPENCL "Build RSB OpenCL" ON)
 
 if(ENABLE_SERIAL)
   set(SOURCES

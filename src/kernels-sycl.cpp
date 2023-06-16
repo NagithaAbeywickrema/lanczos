@@ -1,8 +1,8 @@
 #include "kernels.h"
 
 void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
-                      sycl::buffer<double> out_buf, const unsigned height_a,
-                      const unsigned width_a, sycl::queue queue) {
+                      sycl::buffer<double> out_buf,  int height_a,
+                       int width_a, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_a = a_buf.get_access<sycl::access::mode::read>(h);
@@ -19,10 +19,10 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           double dot = 0;
           if (id < height_a) {
-            for (unsigned i = 0; i < width_a; i++)
+            for (int i = 0; i < width_a; i++)
               dot += d_a[width_a * id + i] * d_b[i];
             d_c[id] = dot;
           }
@@ -31,11 +31,11 @@ void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
   queue.wait();
 }
 
-void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
-               sycl::buffer<unsigned> a_columns_buf,
+void sycl_spmv(sycl::buffer<int> a_row_buf,
+               sycl::buffer<int> a_columns_buf,
                sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
-               sycl::buffer<double> out_buf, const unsigned height_a,
-               const unsigned width_a, sycl::queue queue) {
+               sycl::buffer<double> out_buf,  int height_a,
+                int width_a, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto a_row_ptrs = a_row_buf.get_access<sycl::access::mode::read>(h);
@@ -55,13 +55,13 @@ void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           if (id < height_a) {
-            unsigned start = a_row_ptrs[id];
-            unsigned end = a_row_ptrs[id + 1];
+            int start = a_row_ptrs[id];
+            int end = a_row_ptrs[id + 1];
             double dot = 0;
             // Add each element in the id
-            for (unsigned j = start; j < end; j++)
+            for (int j = start; j < end; j++)
               dot += a_vals[j] * d_b[a_columns[j]];
             d_c[id] = dot;
           }
@@ -71,7 +71,7 @@ void sycl_spmv(sycl::buffer<unsigned> a_row_buf,
 }
 
 double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
-                    sycl::buffer<double> b_vec_buf, const unsigned size,
+                    sycl::buffer<double> b_vec_buf,  int size,
                     sycl::queue queue) {
   // Number of work items in each local work group
   size_t local_size = 256;
@@ -93,7 +93,7 @@ double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          const unsigned tid = item.get_global_id(0);
+           int tid = item.get_global_id(0);
 
           if (tid < size)
             shared_data[item.get_local_id(0)] = a_vec_acc[tid] * b_vec_acc[tid];
@@ -102,7 +102,7 @@ double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
 
           item.barrier(sycl::access::fence_space::local_space);
 
-          for (unsigned stride = item.get_local_range()[0] >> 1; stride > 0;
+          for (int stride = item.get_local_range()[0] >> 1; stride > 0;
                stride >>= 1) {
             if (item.get_local_id(0) < stride)
               shared_data[item.get_local_id(0)] +=
@@ -120,7 +120,7 @@ double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
   result_buf.get_access<sycl::access::mode::read>();
 
   double result = 0.0;
-  for (unsigned i = 0; i < group_size; i++) {
+  for (int i = 0; i < group_size; i++) {
     result += interim_results[i];
   }
 
@@ -129,7 +129,7 @@ double sycl_mtx_dot(sycl::buffer<double> a_vec_buf,
   return result;
 }
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
-                       sycl::buffer<double> out_buf, const unsigned size,
+                       sycl::buffer<double> out_buf,  int size,
                        sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
@@ -144,7 +144,7 @@ void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           if (id < size)
             d_out[id] = d_in[id] / scalar;
         });
@@ -153,8 +153,8 @@ void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
 }
 
 void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
-                      sycl::buffer<double> v_buf, unsigned i,
-                      const unsigned size, sycl::queue queue) {
+                      sycl::buffer<double> v_buf, int i,
+                       int size, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
@@ -168,7 +168,7 @@ void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           if (id < size)
             d_w[id] = d_w[id] - alpha * d_v[id + size * i];
         });
@@ -177,8 +177,8 @@ void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
 }
 
 void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
-                 sycl::buffer<double> v_buf, double beta, unsigned i,
-                 const unsigned size, sycl::queue queue) {
+                 sycl::buffer<double> v_buf, double beta, int i,
+                  int size, sycl::queue queue) {
 
   queue.submit([&](sycl::handler &h) {
     auto d_w = w_buf.get_access<sycl::access::mode::read_write>(h);
@@ -192,7 +192,7 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           if (id < size)
             d_w[id] = d_w[id] - alpha * d_v[id + size * i] -
                       beta * d_v[id + size * (i - 1)];
@@ -201,15 +201,15 @@ void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
   queue.wait();
 }
 
-double sycl_mtx_norm(sycl::buffer<double> w, const unsigned size,
+double sycl_mtx_norm(sycl::buffer<double> w,  int size,
                      sycl::queue queue) {
 
   return sqrt(sycl_mtx_dot(w, w, size, queue));
 }
 
 void sycl_mtx_col_copy(sycl::buffer<double> v_temp_buf,
-                       sycl::buffer<double> v_buf, const unsigned j,
-                       const unsigned size, sycl::queue queue) {
+                       sycl::buffer<double> v_buf,  int j,
+                        int size, sycl::queue queue) {
   queue.submit([&](sycl::handler &h) {
     auto d_temp_v = v_temp_buf.get_access<sycl::access::mode::read>(h);
     auto d_v = v_buf.get_access<sycl::access::mode::write>(h);
@@ -222,7 +222,7 @@ void sycl_mtx_col_copy(sycl::buffer<double> v_temp_buf,
     h.parallel_for(
         sycl::nd_range(sycl::range(global_size), sycl::range(local_size)),
         [=](auto item) {
-          unsigned id = item.get_global_id(0);
+          int id = item.get_global_id(0);
           if (id < size)
             d_v[size * j + id] = d_temp_v[id];
         });

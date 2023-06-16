@@ -2,23 +2,23 @@
 #include "matrix-util.h"
 #include "print-helper.h"
 
-void create_lap(double *lap, const unsigned size) {
+void create_lap(double *lap,  int size) {
   // Create random binary matrix
   double *adj = (double *)calloc(size * size, sizeof(double));
-  for (unsigned i = 0; i < size * size; i++) {
+  for (int i = 0; i < size * size; i++) {
     adj[i] = rand() % 2;
   }
 
   // Make matrix symmetric
-  for (unsigned i = 0; i < size; i++)
-    for (unsigned j = i + 1; j < size; j++)
+  for (int i = 0; i < size; i++)
+    for (int j = i + 1; j < size; j++)
       adj[i * size + j] = adj[j * size + i];
 
   // Create degree matrix
   double *diag = (double *)calloc(size * size, sizeof(double));
-  for (unsigned i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     double sum = 0;
-    for (unsigned j = 0; j < size; j++) {
+    for (int j = 0; j < size; j++) {
       diag[i * size + j] = 0;
       sum += adj[i * size + j];
     }
@@ -26,33 +26,33 @@ void create_lap(double *lap, const unsigned size) {
   }
 
   // Create Laplacian matrix
-  for (unsigned i = 0; i < size * size; i++)
+  for (int i = 0; i < size * size; i++)
     lap[i] = diag[i] - adj[i];
   free(adj), free(diag);
 }
 
-void lap_to_csr(double *matrix, const unsigned rows, const unsigned cols,
-                unsigned **row_ptrs, unsigned **columns, double **vals,
-                unsigned *nnz) {
+void lap_to_csr(double *matrix,  int rows,  int cols,
+                int **row_ptrs, int **columns, double **vals,
+                int *nnz) {
   // Count the number of non-zero elements
   (*nnz) = 0;
-  for (unsigned i = 0; i < rows; i++) {
-    for (unsigned j = 0; j < cols; j++) {
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
       if (matrix[i * cols + j] != 0)
         (*nnz)++;
     }
   }
 
   // Allocate memory for the CSR arrays
-  *row_ptrs = (unsigned *)malloc((rows + 1) * sizeof(unsigned));
-  *columns = (unsigned *)malloc((*nnz) * sizeof(unsigned));
+  *row_ptrs = (int *)malloc((rows + 1) * sizeof(int));
+  *columns = (int *)malloc((*nnz) * sizeof(int));
   *vals = (double *)malloc((*nnz) * sizeof(double));
 
   // Convert matrix to CSR format
-  unsigned k = 0; // Index for the vals and columns arrays
+  int k = 0; // Index for the vals and columns arrays
   (*row_ptrs)[0] = 0;
-  for (unsigned i = 0; i < rows; i++) {
-    for (unsigned j = 0; j < cols; j++) {
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
       if (matrix[i * cols + j] != 0) {
         (*vals)[k] = matrix[i * cols + j];
         (*columns)[k] = j;
@@ -66,11 +66,11 @@ void lap_to_csr(double *matrix, const unsigned rows, const unsigned cols,
 int main(int argc, char *argv[]) {
   char *file_name =
       (argc > 1 ? argv[1] : "../data/sparse-matrices/small-test.mtx");
-  unsigned size = (argc > 2 ? atoi(argv[2]) : 10);
-  unsigned do_read_from_file = (argc > 3 ? atoi(argv[3]) : 1);
+  int size = 10;//(argc > 2 ? atoi(argv[2]) : 10);
+  int do_read_from_file =0;// (argc > 3 ? atoi(argv[3]) : 1);
 
   // Create Laplacian matrix
-  unsigned *row_ptrs, *columns, val_count;
+  int *row_ptrs, *columns, val_count;
   double *vals;
   double *lap = (double *)calloc(size * size, sizeof(double));
   if (do_read_from_file > 0) {
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     create_lap(lap, size);
     lap_to_csr(lap, size, size, &row_ptrs, &columns, &vals, &val_count);
   }
-  unsigned m = size;
+  int m = size;
 
   // Run Lanczos algorithm
   double *eigvals = (double *)calloc(m, sizeof(double));

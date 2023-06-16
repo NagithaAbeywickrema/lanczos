@@ -2,19 +2,19 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
-void lanczos_algo(sycl::buffer<unsigned> a_row_buf,
-                  sycl::buffer<unsigned> a_columns_buf,
+void lanczos_algo(sycl::buffer<int> a_row_buf,
+                  sycl::buffer<int> a_columns_buf,
                   sycl::buffer<double> a_vals_buf, double *alpha, double *beta,
                   sycl::buffer<double> w_buf, sycl::buffer<double> orth_vec_buf,
                   double *orth_vec, sycl::buffer<double> orth_mtx_buf,
-                  const unsigned m, const unsigned size, sycl::queue queue) {
-  for (unsigned i = 0; i < m; i++) {
+                   int m,  int size, sycl::queue queue) {
+  for (int i = 0; i < m; i++) {
     beta[i] = sycl_mtx_norm(w_buf, size, queue);
 
     if (fabs(beta[i] - 0) > EPS) {
       sycl_mtx_sclr_div(w_buf, beta[i], orth_vec_buf, size, queue);
     } else {
-      for (unsigned i = 0; i < size; i++) {
+      for (int i = 0; i < size; i++) {
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       }
       sycl::buffer orth_vec_buf{orth_vec, sycl::range<1>(size)};
@@ -37,8 +37,8 @@ void lanczos_algo(sycl::buffer<unsigned> a_row_buf,
   }
 }
 
-void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
-             const unsigned val_count, const unsigned size, const unsigned m,
+void lanczos(int *row_ptrs, int *columns, double *vals,
+              int val_count,  int size,  int m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
   auto sycl_platforms = sycl::platform().get_platforms();
   auto sycl_pdevices = sycl_platforms[2].get_devices();
@@ -62,13 +62,13 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
   sycl::buffer w_buf{w_vec, sycl::range<1>(size)};
 
   // warm ups
-  for (unsigned k = 0; k < 10; k++)
+  for (int k = 0; k < 10; k++)
     lanczos_algo(a_row_buf, a_columns_buf, a_vals_buf, alpha, beta, w_buf,
                  orth_vec_buf, orth_vec, orth_mtx_buf, m, size, queue);
 
   // Measure time
   clock_t t = clock();
-  for (unsigned k = 0; k < TRIALS; k++)
+  for (int k = 0; k < TRIALS; k++)
     lanczos_algo(a_row_buf, a_columns_buf, a_vals_buf, alpha, beta, w_buf,
                  orth_vec_buf, orth_vec, orth_mtx_buf, m, size, queue);
   t = clock() - t;

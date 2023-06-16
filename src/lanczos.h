@@ -6,14 +6,14 @@
 
 #define MAX 1000000
 #define EPS 1e-12
-#define TRIALS 1000
+#define TRIALS 2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
-             const unsigned val_count, const unsigned size, const unsigned m,
+void lanczos(int *row_ptrs, int *columns, double *vals,
+              int val_count,  int size,  int m,
              double *eigvals, double *eigvecs, int argc, char *argv[]);
 
 #ifdef __cplusplus
