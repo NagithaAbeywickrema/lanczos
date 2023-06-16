@@ -30,14 +30,12 @@ void nomp_vec_add(double *a_vec, double *b_vec, double *out_vec, int size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (int i = 0; i < size; i++)
     out_vec[i] = a_vec[i] + b_vec[i];
-#pragma nomp sync
 }
 
 void nomp_mtx_col_copy(double *vec, double *mtx, int col_index, int size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (int j = 0; j < size; j++)
     mtx[j + size * col_index] = vec[j];
-#pragma nomp sync
 }
 
 void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
@@ -49,7 +47,6 @@ void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
       dot += a_mtx[i * num_cols + k] * b_vec[k];
     out_vec[i] = dot;
   }
-#pragma nomp sync
 }
 
 void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec,
@@ -64,7 +61,6 @@ void nomp_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec,
       dot += a_vals[row_start + jj] * b_vec[a_columns[row_start + jj]];
     out_vec[row] = dot;
   }
-#pragma nomp sync
 }
 
 void nomp_calc_w_init(double *w_vec, double alpha, double *orth_mtx,
@@ -73,7 +69,6 @@ void nomp_calc_w_init(double *w_vec, double alpha, double *orth_mtx,
   for (int j = 0; j < size; j++) {
     w_vec[j] = w_vec[j] - alpha * orth_mtx[j + size * col_index];
   }
-#pragma nomp sync
 }
 
 void nomp_calc_w(double *w_vec, double alpha, double *orth_mtx, double beta,
@@ -83,5 +78,4 @@ void nomp_calc_w(double *w_vec, double alpha, double *orth_mtx, double beta,
     w_vec[j] = w_vec[j] - alpha * orth_mtx[j + size * col_index] -
                beta * orth_mtx[j + size * (col_index - 1)];
   }
-#pragma nomp sync
 }

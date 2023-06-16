@@ -1,44 +1,5 @@
 #include "../src/kernels.h"
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-#define tcalloc(T, n) (T *)calloc(n, sizeof(T))
-#define tfree(p) free_((void **)p)
-void free_(void **p) { free(*p), *p = NULL; }
-
-double *create_host_vec(int size) {
-  double *x = tcalloc(double, size);
-  for (int i = 0; i < size; i++)
-    x[i] = (rand() + 1.0) / RAND_MAX;
-
-  return x;
-}
-
-int inc(int i) {
-  return i + 1;
-  // return (int)(1.01 * i);
-  if (i < 1000)
-    return i + 1;
-  else
-    return (int)(1.03 * i);
-}
-
-FILE *open_file(char *suffix) {
-  char fname[2 * BUFSIZ];
-  strncpy(fname, "lanczos", BUFSIZ);
-  strncat(fname, "_", 2);
-  strncat(fname, suffix, BUFSIZ);
-  strncat(fname, ".txt", 5);
-
-  FILE *fp = fopen(fname, "a");
-  if (!fp)
-    printf("Not found \n");
-  return fp;
-}
+#include "bench.h"
 
 void vec_norm_bench() {
   FILE *fp = open_file("vec-norm");
@@ -219,7 +180,7 @@ void mtx_col_copy_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("calc-w");
-  for (int i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 1e2; i < 3.7e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
 
@@ -243,10 +204,10 @@ void calc_w_bench() {
 
 void lanczos_bench(int argc, char *argv[]) {
 #pragma nomp init(argc, argv)
-  vec_sclr_div_bench();
-// vec_norm_bench();
-// vec_dot_bench();
-// calc_w_bench();
+  // vec_sclr_div_bench();
+  // vec_norm_bench();
+  // vec_dot_bench();
+  calc_w_bench();
 // mtx_col_copy_bench();
 #pragma nomp finalize
 }

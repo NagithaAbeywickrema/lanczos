@@ -113,6 +113,8 @@ if(ENABLE_BENCH)
         src/main.c
         src/lanczos.h
         bench/nomp-knl-bench.c
+        bench/bench.h
+        bench/bench.c
         src/kernels.h
         src/print-helper.c
         src/lanczos-aux.c
@@ -134,6 +136,8 @@ if(ENABLE_BENCH)
       src/main.c
       src/lanczos.h
       bench/ocl-knl-bench.c
+      bench/bench.h
+      bench/bench.c
       src/kernels.h
       src/print-helper.c
       src/lanczos-aux.c
@@ -154,6 +158,8 @@ if(ENABLE_BENCH)
     set(SOURCES
         src/main.c
         src/lanczos.h
+        bench/bench.h
+        bench/bench.cu
         bench/cuda-knl-bench.cu
         src/kernels.h
         src/print-helper.c
@@ -168,3 +174,8 @@ if(ENABLE_BENCH)
     target_link_libraries(cuda-bench PRIVATE m)
   endif()
 endif()
+
+file(GLOB TRANSFORMATIONS
+  "src/transforms.py"
+)
+file(COPY ${TRANSFORMATIONS} DESTINATION .)

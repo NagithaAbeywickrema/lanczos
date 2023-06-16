@@ -117,12 +117,15 @@ void mm_to_csr(char *file_name, int **row_ptrs, int **columns, double **vals,
   (*row_ptrs)[current_row] = row_val_count;
 }
 
-
-void create_lap(double *lap, int size) {
+void create_lap(double *lap, int size, int nnzp) {
   // Create random binary matrix
   double *adj = (double *)calloc(size * size, sizeof(double));
   for (int i = 0; i < size * size; i++) {
-    adj[i] = rand() % 2;
+    int temp = rand() % nnzp;
+    if (temp > 1)
+      adj[i] = 0;
+    else
+      adj[i] = 1;
   }
 
   // Make matrix symmetric

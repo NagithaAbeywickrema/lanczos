@@ -2,6 +2,9 @@
 #include "matrix-util.h"
 #include "print-helper.h"
 
+#if defined(ENABLE_BENCH)
+#include "../bench/bench.h"
+#endif
 
 int main(int argc, char *argv[]) {
   char *file_name =
@@ -16,7 +19,7 @@ int main(int argc, char *argv[]) {
   if (do_read_from_file > 0) {
     mm_to_csr(file_name, &row_ptrs, &columns, &vals, &size, &size, &val_count);
   } else {
-    create_lap(lap, size);
+    create_lap(lap, size, 10);
     lap_to_csr(lap, size, size, &row_ptrs, &columns, &vals, &val_count);
   }
   int m = size;
