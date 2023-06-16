@@ -29,3 +29,4 @@ FILE *open_file(char *suffix) {
     printf("Not found \n");
   return fp;
 }
+

@@ -7,8 +7,6 @@
 #include <CL/cl.h>
 #endif
 
-#include "../src/kernels.h"
-
 #include "bench.h"
 
 void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
@@ -42,14 +40,12 @@ void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
 void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
                         cl_program prg) {
   FILE *fp = open_file("vec-sclr-div-ocl");
-  for (int i = 1; i < 5; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
-    double *h_c = (double *)malloc(sizeof(double) * i);
 
-    serial_vec_sclr_div(h_a, h_c, 10, i);
     cl_mem d_a =
         clCreateBuffer(ctx, CL_MEM_READ_WRITE, i * sizeof(double), NULL, NULL);
     cl_mem d_b =
@@ -73,12 +69,6 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
     for (int j = 0; j < 1000; j++)
       ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1 / 10, i);
     t = clock() - t;
-
-    err = clEnqueueReadBuffer(queue, d_b, CL_TRUE, 0, i * sizeof(double), h_b,
-                              0, NULL, NULL);
-    for (int k = 0; k < i; k++) {
-      printf("h_b[%d]: %f \n", k, h_b[k]);
-    }
 
     fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-div", "ocl", 32, i,
             (double)t1 / (CLOCKS_PER_SEC * 1000),

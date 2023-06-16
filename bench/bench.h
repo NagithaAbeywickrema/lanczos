@@ -1,8 +1,13 @@
+#include "../src/kernels.h"
+#include "../src/lanczos.h"
+#include "../src/matrix-util.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
+
 
 #define BLOCK_SIZE 32
 #define TRAILS 100

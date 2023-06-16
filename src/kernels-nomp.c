@@ -23,6 +23,12 @@ double nomp_vec_norm(double *a_vec, int size) {
 void nomp_vec_sclr_div(double *a_vec, double *out_vec, double sclr, int size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (int i = 0; i < size; i++)
+    out_vec[i] = a_vec[i] / sclr;
+}
+
+void nomp_vec_sclr_mul(double *a_vec, double *out_vec, double sclr, int size) {
+#pragma nomp for transform("transforms", "stream_data_flow_loop")
+  for (int i = 0; i < size; i++)
     out_vec[i] = a_vec[i] * sclr;
 }
 

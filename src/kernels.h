@@ -18,11 +18,14 @@ void serial_calc_w_init(double *w_vec, double alpha, double *orth_mtx,
                         int col_index, int size);
 void serial_calc_w(double *w_vec, double alpha, double *orth_mtx, double beta,
                    int col_index, int size);
+void serial_vec_sclr_mul(double *a_vec, double *out_vec, double sclr,
+                         int size);
 
 // Parallelized functions of Lanczos routine implemented using Nomp.
 double nomp_vec_dot(double *a_vec, double *b_vec, int size);
 double nomp_vec_norm(double *a_vec, int size);
 void nomp_vec_sclr_div(double *a_vec, double *out_vec, double sclr, int size);
+void nomp_vec_sclr_mul(double *a_vec, double *out_vec, double sclr, int size) ;
 void nomp_mtx_col_copy(double *vec, double *mtx, int col_index, int size);
 void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
                       int num_rows, int num_cols);

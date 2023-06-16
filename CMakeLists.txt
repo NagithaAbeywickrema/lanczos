@@ -165,6 +165,7 @@ if(ENABLE_BENCH)
         src/print-helper.c
         src/lanczos-aux.c
         src/kernels-cuda.cu
+        src/kernels-serial.c
         src/lanczos-aux.h
         src/matrix-util.h
         src/matrix-util.c

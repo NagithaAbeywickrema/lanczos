@@ -1,7 +1,3 @@
-#include "../src/kernels.h"
-#include "../src/lanczos.h"
-#include "../src/matrix-util.h"
-
 #include "bench.h"
 
 void vec_sclr_mul_bench() {
@@ -28,6 +24,15 @@ void vec_sclr_mul_bench() {
       cuda_vec_sclr_mul(d_a, d_b, 1 / 10, i, grid_size, BLOCK_SIZE);
     cudaDeviceSynchronize();
     t = clock() - t;
+
+    double *w_vec = (double *)calloc(i, sizeof(double));
+    double *out = (double *)calloc(i, sizeof(double));
+    serial_vec_sclr_mul(h_a, w_vec, 1 / 10, i);
+
+    cudaMemcpy(out, d_b, i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i; k++) {
+      assert(fabs(w_vec[k] - out[k]) < EPS);
+    }
 
     cudaFree(d_a), cudaFree(d_b);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-mul", "cuda", 32, i,
@@ -61,6 +66,15 @@ void vec_sclr_div_bench() {
       cuda_vec_sclr_div(d_a, d_b, 10, i, grid_size, BLOCK_SIZE);
     cudaDeviceSynchronize();
     t = clock() - t;
+
+    double *w_vec = (double *)calloc(i, sizeof(double));
+    double *out = (double *)calloc(i, sizeof(double));
+    serial_vec_sclr_div(h_a, w_vec, 10, i);
+
+    cudaMemcpy(out, d_b, i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i; k++) {
+      assert(fabs(w_vec[k] - out[k]) < EPS);
+    }
 
     cudaFree(d_a), cudaFree(d_b);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-div", "cuda", 32, i,
@@ -97,6 +111,14 @@ void calc_w_bench() {
     cudaDeviceSynchronize();
     t = clock() - t;
 
+    double *out = (double *)calloc(i, sizeof(double));
+    serial_calc_w(h_a, 10, h_b, 20, i - 1, i);
+
+    cudaMemcpy(out, d_b, i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i; k++) {
+      assert(fabs(h_b[k] - out[k]) < EPS);
+    }
+
     cudaFree(d_a), cudaFree(d_b);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc_w", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -111,6 +133,8 @@ void vec_norm_bench() {
   for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a;
+
+    double out;
     cudaMalloc((void **)&d_a, i * sizeof(double));
     cudaMemcpy(d_a, h_a, i * sizeof(double), cudaMemcpyHostToDevice);
 
@@ -123,8 +147,12 @@ void vec_norm_bench() {
     // Measure time
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      cuda_vec_norm(d_a, i, grid_size, BLOCK_SIZE);
+      out = cuda_vec_norm(d_a, i, grid_size, BLOCK_SIZE);
     t = clock() - t;
+
+    double norm_val = serial_vec_norm(h_a, i);
+
+    assert(fabs(norm_val - out) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-norm", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -141,7 +169,7 @@ void vec_dot_bench() {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *d_a, *d_b;
-
+    double out;
     cudaMalloc((void **)&d_a, i * sizeof(double));
     cudaMemcpy(d_a, h_a, i * sizeof(double), cudaMemcpyHostToDevice);
 
@@ -157,8 +185,12 @@ void vec_dot_bench() {
     // Measure time
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      cuda_vec_dot(d_a, d_b, i, grid_size, BLOCK_SIZE);
+      out = cuda_vec_dot(d_a, d_b, i, grid_size, BLOCK_SIZE);
     t = clock() - t;
+
+    double dot = serial_vec_dot(h_a, h_b, i);
+
+    assert(fabs(dot - out) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-dot", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -192,6 +224,15 @@ void mtx_col_copy_bench() {
       cuda_mtx_col_copy(d_a, d_b, 0, i, grid_size, BLOCK_SIZE);
     cudaDeviceSynchronize();
     t = clock() - t;
+
+    double *mtx = (double *)calloc(i * i, sizeof(double));
+    double *out = (double *)calloc(i, sizeof(double));
+    serial_mtx_col_copy(h_a, mtx, 0, i);
+
+    cudaMemcpy(out, d_b, i * i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i * i; k++) {
+      assert(fabs(mtx[k] - out[k]) < EPS);
+    }
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "mtx-col-copy", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -227,6 +268,13 @@ void create_roofline() {
       cuda_d2d_mem_cpy(d_a, d_b, i, grid_size, BLOCK_SIZE);
     cudaDeviceSynchronize();
     t = clock() - t;
+
+    double *out = (double *)calloc(i, sizeof(double));
+
+    cudaMemcpy(out, d_b, i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i; k++) {
+      assert(fabs(h_a[k] - out[k]) < EPS);
+    }
 
     cudaFree(d_a), cudaFree(d_b);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "roofline", "cuda", 32, i,
@@ -280,6 +328,14 @@ void spmv_bench() {
     cudaDeviceSynchronize();
     t = clock() - t;
 
+    double *w_vec = (double *)calloc(i, sizeof(double));
+    double *out = (double *)calloc(i, sizeof(double));
+    serial_spmv(row_ptrs, columns, vals, h_orth_vec, w_vec, i, i);
+
+    cudaMemcpy(out, d_w_vec, i * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int k = 0; k < i; k++) {
+      assert(fabs(w_vec[k] - out[k]) < EPS);
+    }
     // Free device memory
     cudaFree(d_row_ptrs), cudaFree(d_columns), cudaFree(d_vals),
         cudaFree(d_orth_vec), cudaFree(d_w_vec);
@@ -297,12 +353,12 @@ void spmv_bench() {
 }
 
 void lanczos_bench(int argc, char *argv[]) {
-  // vec_norm_bench();
-  // calc_w_bench();
-  // vec_sclr_div_bench();
-  // vec_dot_bench();
+  vec_sclr_mul_bench();
+  vec_sclr_div_bench();
+  calc_w_bench();
+  vec_norm_bench();
+  vec_dot_bench();
+  mtx_col_copy_bench();
+  create_roofline();
   spmv_bench();
-  // vec_sclr_mul_bench();
-  // calc_w_bench();
-  // vec_norm_bench()
 }
