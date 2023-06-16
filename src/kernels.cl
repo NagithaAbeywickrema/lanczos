@@ -3,7 +3,15 @@ __kernel void mtx_sclr_div(__global double *v, __global double *w, double sclr,
   unsigned id = get_global_id(0);
 
   if (id < n)
-    w[id] = v[id] / sclr;
+    w[id] = v[id] * sclr;
+};
+
+__kernel void d2d_mem_cpy(__global double *v, __global double *w,
+                          const unsigned n) {
+  int id = get_global_id(0);
+
+  if (id < n)
+    w[id] = v[id];
 };
 
 __kernel void mtx_col_copy(__global double *v, __global double *V,

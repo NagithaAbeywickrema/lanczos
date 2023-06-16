@@ -21,7 +21,7 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
   for (unsigned i = 0; i < m; i++) {
     beta[i] = ocl_vec_norm(ctx, queue, prg, d_w_vec, size);
     if (fabs(beta[i] - 0) > EPS) {
-      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec, beta[i], size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec,(double)(1/ beta[i]), size);
     } else {
       for (unsigned i = 0; i < size; i++) {
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
@@ -30,11 +30,10 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
           clEnqueueWriteBuffer(queue, d_orth_vec, CL_TRUE, 0,
                                size * sizeof(double), orth_vec, 0, NULL, NULL);
       double norm_val = ocl_vec_norm(ctx, queue, prg, d_orth_vec, size);
-      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec, norm_val, size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec, (double)(1/norm_val), size);
     }
 
     ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
-
     ocl_spmv(ctx, queue, prg, d_row_ptrs, d_columns, d_vals, d_orth_vec,
              d_w_vec, size, size);
     alpha[i] = ocl_vec_dot(ctx, queue, prg, d_orth_vec, d_w_vec, size);

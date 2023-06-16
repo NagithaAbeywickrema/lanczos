@@ -1,5 +1,11 @@
 #include <math.h>
 
+void nomp_d2d_mem_cpy(double *a, double *b, unsigned int N) {
+#pragma nomp for transform("transforms", "stream_data_flow_loop")
+  for (unsigned i = 0; i < N; i++)
+    b[i] = a[i];
+}
+
 double nomp_vec_dot(double *a_vec, double *b_vec, const unsigned size) {
   double prod[1] = {0};
 #pragma nomp for reduce("prod", "+")
@@ -18,7 +24,14 @@ void nomp_vec_sclr_div(double *a_vec, double *out_vec, const double sclr,
                        const unsigned size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (unsigned i = 0; i < size; i++)
-    out_vec[i] = a_vec[i] / sclr;
+    out_vec[i] = a_vec[i] * sclr;
+}
+
+void nomp_vec_add(double *a_vec, double *b_vec, double *out_vec,
+                  const unsigned size) {
+#pragma nomp for transform("transforms", "stream_data_flow_loop")
+  for (unsigned i = 0; i < size; i++)
+    out_vec[i] = a_vec[i] + b_vec[i];
 #pragma nomp sync
 }
 

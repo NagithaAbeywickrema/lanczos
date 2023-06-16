@@ -2,24 +2,27 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
+#define BLOCK_SIZE 32
+
 void lanczos_algo(unsigned *d_row_ptrs, unsigned *d_columns, double *d_vals,
                   double *alpha, double *beta, double *d_w_vec, double *w_vec,
                   double *d_orth_vec, double *orth_vec, double *d_orth_mtx,
                   const unsigned m, const unsigned size) {
   cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
+  const unsigned grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
   for (unsigned i = 0; i < m; i++) {
     beta[i] = cuda_vec_norm(d_w_vec, size);
 
     if (fabs(beta[i] - 0) > 1e-8) {
-      cuda_vec_sclr_div(d_w_vec, d_orth_vec, beta[i], size);
+      cuda_vec_sclr_div(d_w_vec, d_orth_vec, 1/beta[i], size,grid_size,BLOCK_SIZE);
     } else {
       for (unsigned i = 0; i < size; i++)
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       cudaMemcpy(d_orth_vec, orth_vec, (size) * sizeof(double),
                  cudaMemcpyHostToDevice);
       double norm_val = cuda_vec_norm(d_orth_vec, size);
-      cuda_vec_sclr_div(d_orth_vec, d_orth_vec, norm_val, size);
+      cuda_vec_sclr_div(d_orth_vec, d_orth_vec, 1/norm_val, size,grid_size,BLOCK_SIZE);
     }
 
     cuda_mtx_col_copy(d_orth_vec, d_orth_mtx, i, size);
@@ -31,7 +34,7 @@ void lanczos_algo(unsigned *d_row_ptrs, unsigned *d_columns, double *d_vals,
     if (i == 0) {
       cuda_calc_w_init(d_w_vec, alpha[i], d_orth_mtx, i, size);
     } else {
-      cuda_calc_w(d_w_vec, alpha[i], d_orth_mtx, beta[i], i, size);
+      cuda_calc_w(d_w_vec, alpha[i], d_orth_mtx, beta[i], i, size,grid_size,BLOCK_SIZE);
     }
   }
 }
@@ -64,7 +67,7 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
              cudaMemcpyHostToDevice);
   cudaMemcpy(d_vals, vals, (val_count) * sizeof(double),
              cudaMemcpyHostToDevice);
-
+  
   // Warm up runs
   for (unsigned k = 0; k < 10; k++)
     lanczos_algo(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec, w_vec,

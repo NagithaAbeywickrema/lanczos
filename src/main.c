@@ -85,9 +85,15 @@ int main(int argc, char *argv[]) {
   double *eigvals = (double *)calloc(m, sizeof(double));
   double *eigvecs = (double *)calloc(m * size, sizeof(double));
 
+  
+
+  #if defined(ENABLE_BENCH)
+  lanczos_bench(argc, argv);
+  #else
   lanczos(row_ptrs, columns, vals, val_count, size, m, eigvals, eigvecs, argc,
           argv);
   print_eigen_vals(eigvals, size);
+  #endif
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),
       free(vals);
