@@ -9,11 +9,11 @@
 #define SPARSE_MATRIX_DENSITY 0.2
 
 typedef struct {
-  unsigned row, column;
+  int row, column;
   double val;
 } mm_struct;
 
-void get_tokens(char *str, unsigned *row, unsigned *column, double *val) {
+void get_tokens(char *str, int *row, int *column, double *val) {
   char *token = strtok(str, " "), *endptr;
   *row = strtol(token, &endptr, 10);
   assert(endptr != token);
@@ -24,7 +24,7 @@ void get_tokens(char *str, unsigned *row, unsigned *column, double *val) {
   token = strtok(NULL, " ");
 }
 
-void get_header(char *str, unsigned *row, unsigned *column, double *val) {
+void get_header(char *str, int *row, int *column, double *val) {
   char *token = strtok(str, " "), *endptr;
 
   *row = strtol(token, &endptr, 10);
@@ -47,8 +47,8 @@ int mm_struct_cmp(const void *a, const void *b) {
     return aa->column - bb->column;
 }
 
-void mm_to_csr(char *file_name, unsigned **row_ptrs, unsigned **columns,
-               double **vals, unsigned *m, unsigned *n, unsigned *val_count) {
+void mm_to_csr(char *file_name, int **row_ptrs, int **columns, double **vals,
+               int *m, int *n, int *val_count) {
   // Open the file
   FILE *fp = fopen(file_name, "r");
   if (fp == NULL) {
@@ -58,7 +58,7 @@ void mm_to_csr(char *file_name, unsigned **row_ptrs, unsigned **columns,
 
   // Parse the file line by line
   mm_struct *mm;
-  unsigned index = 0, header = 0;
+  int index = 0, header = 0;
   char buffer[1024];
   while (fgets(buffer, 1024, fp) != NULL) {
     // Skip comments
@@ -69,10 +69,10 @@ void mm_to_csr(char *file_name, unsigned **row_ptrs, unsigned **columns,
     if (!header) {
       double val_count_f;
       get_header(buffer, m, n, &val_count_f);
-      *val_count = ((unsigned)val_count_f) * 2 + *n;
+      *val_count = ((int)val_count_f) * 2 + *n;
       index = *n;
       mm = (mm_struct *)calloc(*val_count, sizeof(mm_struct));
-      for (unsigned i = 0; i < *n; i++) {
+      for (int i = 0; i < *n; i++) {
         mm_struct element = {i + 1, i + 1, 0};
         mm[i] = element;
       }
@@ -81,7 +81,7 @@ void mm_to_csr(char *file_name, unsigned **row_ptrs, unsigned **columns,
     }
 
     // Parse line
-    unsigned row, column;
+    int row, column;
     double val;
     get_tokens(buffer, &row, &column, &val);
     mm_struct element = {row, column, val};
@@ -99,13 +99,13 @@ void mm_to_csr(char *file_name, unsigned **row_ptrs, unsigned **columns,
   qsort(mm, *val_count, sizeof(mm_struct), mm_struct_cmp);
 
   // Convert format from MM to CSR
-  unsigned current_row = 1;
-  unsigned row_val_count = 0;
-  *row_ptrs = (unsigned *)calloc(((*m) + 1), sizeof(unsigned));
-  *columns = (unsigned *)calloc(*val_count, sizeof(unsigned));
+  int current_row = 1;
+  int row_val_count = 0;
+  *row_ptrs = (int *)calloc(((*m) + 1), sizeof(int));
+  *columns = (int *)calloc(*val_count, sizeof(int));
   *vals = (double *)calloc(*val_count, sizeof(double));
   *row_ptrs[0] = 0;
-  for (unsigned i = 0; i < (*val_count); i++) {
+  for (int i = 0; i < (*val_count); i++) {
     if (current_row != mm[i].row) {
       (*row_ptrs)[current_row] = row_val_count;
       current_row = mm[i].row;

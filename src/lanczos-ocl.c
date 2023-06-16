@@ -16,21 +16,23 @@
 void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
                   double *alpha, double *beta, double *orth_vec,
                   cl_mem d_row_ptrs, cl_mem d_columns, cl_mem d_vals,
-                  cl_mem d_w_vec, cl_mem d_orth_vec, cl_mem d_orth_mtx,
-                  const unsigned m, const unsigned size) {
-  for (unsigned i = 0; i < m; i++) {
+                  cl_mem d_w_vec, cl_mem d_orth_vec, cl_mem d_orth_mtx, int m,
+                  int size) {
+  for (int i = 0; i < m; i++) {
     beta[i] = ocl_vec_norm(ctx, queue, prg, d_w_vec, size);
     if (fabs(beta[i] - 0) > EPS) {
-      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec,(double)(1/ beta[i]), size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_w_vec,
+                       (double)(1 / beta[i]), size);
     } else {
-      for (unsigned i = 0; i < size; i++) {
+      for (int i = 0; i < size; i++) {
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       }
       cl_int err =
           clEnqueueWriteBuffer(queue, d_orth_vec, CL_TRUE, 0,
                                size * sizeof(double), orth_vec, 0, NULL, NULL);
       double norm_val = ocl_vec_norm(ctx, queue, prg, d_orth_vec, size);
-      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec, (double)(1/norm_val), size);
+      ocl_mtx_sclr_div(ctx, queue, prg, d_orth_vec, d_orth_vec,
+                       (double)(1 / norm_val), size);
     }
 
     ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
@@ -46,9 +48,8 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
   }
 }
 
-void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
-             const unsigned val_count, const unsigned size, const unsigned m,
-             double *eigvals, double *eigvecs, int argc, char *argv[]) {
+void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
+             int m, double *eigvals, double *eigvecs, int argc, char *argv[]) {
 
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
   double *alpha = (double *)calloc(m, sizeof(double));
@@ -64,7 +65,7 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
   cl_int err;
 
   cl_uint num_platforms;
-  const int platform_id = 2;
+  int platform_id = 2;
   err = clGetPlatformIDs(0, NULL, &num_platforms);
   if (platform_id < 0 | platform_id >= num_platforms) {
     printf("Given platform id is invalid \n");
@@ -76,7 +77,7 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
   free(cl_platforms);
 
   cl_uint num_devices;
-  const int device = 0;
+  int device = 0;
   err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
   if (device < 0 || device >= num_devices) {
     printf("Invalid device \n");
@@ -108,7 +109,7 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
   fclose(kernelFile);
 
   program = clCreateProgramWithSource(context, 1, (const char **)&kernelSource,
-                                      (const size_t *)&kernelSize, &err);
+                                      (size_t *)&kernelSize, &err);
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 
   // Allocate memory
@@ -116,9 +117,9 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
 
   size_t bytes = size * size * sizeof(double);
   d_row_ptrs = clCreateBuffer(context, CL_MEM_READ_ONLY,
-                              (size + 1) * sizeof(unsigned), NULL, NULL);
-  d_columns = clCreateBuffer(context, CL_MEM_READ_ONLY,
-                             val_count * sizeof(unsigned), NULL, NULL);
+                              (size + 1) * sizeof(int), NULL, NULL);
+  d_columns = clCreateBuffer(context, CL_MEM_READ_ONLY, val_count * sizeof(int),
+                             NULL, NULL);
   d_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, val_count * sizeof(double),
                           NULL, NULL);
   d_orth_mtx = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
@@ -130,22 +131,20 @@ void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
   err = clEnqueueWriteBuffer(queue, d_w_vec, CL_TRUE, 0, size * sizeof(double),
                              w_vec, 0, NULL, NULL);
   err = clEnqueueWriteBuffer(queue, d_row_ptrs, CL_TRUE, 0,
-                             (size + 1) * sizeof(unsigned), row_ptrs, 0, NULL,
-                             NULL);
+                             (size + 1) * sizeof(int), row_ptrs, 0, NULL, NULL);
   err = clEnqueueWriteBuffer(queue, d_columns, CL_TRUE, 0,
-                             val_count * sizeof(unsigned), columns, 0, NULL,
-                             NULL);
+                             val_count * sizeof(int), columns, 0, NULL, NULL);
   err = clEnqueueWriteBuffer(queue, d_vals, CL_TRUE, 0,
                              val_count * sizeof(double), vals, 0, NULL, NULL);
 
   // Warm up runs
-  for (unsigned t = 0; t < 10; t++)
+  for (int t = 0; t < 10; t++)
     lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
                  d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
 
   // Measure time
   clock_t t = clock();
-  for (unsigned k = 0; k < TRIALS; k++)
+  for (int k = 0; k < TRIALS; k++)
     lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
                  d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
   t = clock() - t;

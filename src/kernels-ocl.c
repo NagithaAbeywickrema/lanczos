@@ -11,12 +11,12 @@
 #include <stdio.h>
 
 double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
-                    cl_mem d_a_vec, const unsigned size) {
+                    cl_mem d_a_vec, int size) {
   cl_int err;
   cl_kernel knl;
 
   size_t local_size = 32, global_size;
-  unsigned num_blocks = (size + local_size - 1) / local_size;
+  int num_blocks = (size + local_size - 1) / local_size;
   global_size = num_blocks * local_size;
 
   knl = clCreateKernel(prg, "vec_dot", &err);
@@ -27,7 +27,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_a_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_a_vec);
   err |= clSetKernelArg(knl, 2, sizeof(cl_mem), &d_v_r);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &size);
   err |= clSetKernelArg(knl, 4, sizeof(double) * local_size, NULL);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
@@ -45,7 +45,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
     return 0;
   } else {
     double total = 0;
-    for (unsigned i = 0; i < num_blocks; i++) {
+    for (int i = 0; i < num_blocks; i++) {
       total += v_r[i];
     }
     free(v_r);
@@ -54,8 +54,7 @@ double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
-                      cl_mem d_a_vec, cl_mem d_out_vec, const double sclr,
-                      const unsigned size) {
+                      cl_mem d_a_vec, cl_mem d_out_vec, double sclr, int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -67,7 +66,7 @@ void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_out_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_a_vec);
   err |= clSetKernelArg(knl, 2, sizeof(double), &sclr);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -76,7 +75,7 @@ void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
-                     cl_mem d_a_vec, cl_mem d_out_vec, const unsigned size) {
+                     cl_mem d_a_vec, cl_mem d_out_vec, int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -87,7 +86,7 @@ void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
 
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_out_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_a_vec);
-  err |= clSetKernelArg(knl, 2, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 2, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -96,8 +95,7 @@ void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
-                      cl_mem d_vec, cl_mem d_mtx, const unsigned col_index,
-                      const unsigned size) {
+                      cl_mem d_vec, cl_mem d_mtx, int col_index, int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -109,7 +107,7 @@ void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_mtx);
   err |= clSetKernelArg(knl, 2, sizeof(double), &col_index);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -119,7 +117,7 @@ void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
 
 void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
                      cl_mem d_a_mtx, cl_mem d_b_vec, cl_mem d_out_vec,
-                     const unsigned num_rows, const unsigned num_cols) {
+                     int num_rows, int num_cols) {
   cl_int err;
   cl_kernel knl;
 
@@ -131,8 +129,8 @@ void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_a_mtx);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_b_vec);
   err |= clSetKernelArg(knl, 2, sizeof(cl_mem), &d_out_vec);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &num_rows);
-  err |= clSetKernelArg(knl, 4, sizeof(unsigned), &num_cols);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &num_rows);
+  err |= clSetKernelArg(knl, 4, sizeof(int), &num_cols);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -142,8 +140,7 @@ void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
 
 void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
               cl_mem d_a_row_ptrs, cl_mem d_a_columns, cl_mem d_a_vals,
-              cl_mem d_b_vec, cl_mem d_out_vec, const unsigned num_rows,
-              const unsigned num_cols) {
+              cl_mem d_b_vec, cl_mem d_out_vec, int num_rows, int num_cols) {
   cl_int err;
   cl_kernel knl;
 
@@ -157,8 +154,8 @@ void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
   err |= clSetKernelArg(knl, 2, sizeof(cl_mem), &d_a_vals);
   err |= clSetKernelArg(knl, 3, sizeof(cl_mem), &d_b_vec);
   err |= clSetKernelArg(knl, 4, sizeof(cl_mem), &d_out_vec);
-  err |= clSetKernelArg(knl, 5, sizeof(unsigned), &num_rows);
-  err |= clSetKernelArg(knl, 6, sizeof(unsigned), &num_cols);
+  err |= clSetKernelArg(knl, 5, sizeof(int), &num_rows);
+  err |= clSetKernelArg(knl, 6, sizeof(int), &num_cols);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -167,12 +164,12 @@ void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
-                   cl_mem d_a_vec, cl_mem d_b_vec, const unsigned size) {
+                   cl_mem d_a_vec, cl_mem d_b_vec, int size) {
   cl_int err;
   cl_kernel knl;
 
   size_t local_size = 32, global_size;
-  unsigned num_blocks = (size + local_size - 1) / local_size;
+  int num_blocks = (size + local_size - 1) / local_size;
   global_size = num_blocks * local_size;
 
   knl = clCreateKernel(prg, "vec_dot", &err);
@@ -183,7 +180,7 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_a_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_b_vec);
   err |= clSetKernelArg(knl, 2, sizeof(cl_mem), &d_v_r);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &size);
   err |= clSetKernelArg(knl, 4, sizeof(double) * local_size, NULL);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
@@ -200,7 +197,7 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
     return 0;
   } else {
     double total = 0;
-    for (unsigned i = 0; i < num_blocks; i++)
+    for (int i = 0; i < num_blocks; i++)
       total += v_r[i];
     free(v_r);
     return total;
@@ -208,8 +205,8 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
-                     cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
-                     const unsigned col_index, const unsigned size) {
+                     cl_mem d_w_vec, double alpha, cl_mem d_orth_mtx,
+                     int col_index, int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -221,8 +218,8 @@ void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_w_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_orth_mtx);
   err |= clSetKernelArg(knl, 2, sizeof(double), &alpha);
-  err |= clSetKernelArg(knl, 3, sizeof(unsigned), &col_index);
-  err |= clSetKernelArg(knl, 4, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 3, sizeof(int), &col_index);
+  err |= clSetKernelArg(knl, 4, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);
@@ -231,9 +228,8 @@ void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
-                cl_mem d_w_vec, const double alpha, cl_mem d_orth_mtx,
-                const double beta, const unsigned col_index,
-                const unsigned size) {
+                cl_mem d_w_vec, double alpha, cl_mem d_orth_mtx, double beta,
+                int col_index, int size) {
   cl_int err;
   cl_kernel knl;
 
@@ -246,8 +242,8 @@ void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_orth_mtx);
   err |= clSetKernelArg(knl, 2, sizeof(double), &alpha);
   err |= clSetKernelArg(knl, 3, sizeof(double), &beta);
-  err |= clSetKernelArg(knl, 4, sizeof(unsigned), &col_index);
-  err |= clSetKernelArg(knl, 5, sizeof(unsigned), &size);
+  err |= clSetKernelArg(knl, 4, sizeof(int), &col_index);
+  err |= clSetKernelArg(knl, 5, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,
                                0, NULL, NULL);

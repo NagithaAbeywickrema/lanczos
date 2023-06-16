@@ -1,33 +1,33 @@
 #include "../src/kernels.h"
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
 
 #define tcalloc(T, n) (T *)calloc(n, sizeof(T))
 #define tfree(p) free_((void **)p)
 void free_(void **p) { free(*p), *p = NULL; }
 
-double *create_host_vec(const unsigned size) {
+double *create_host_vec(int size) {
   double *x = tcalloc(double, size);
-  for (unsigned i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     x[i] = (rand() + 1.0) / RAND_MAX;
 
   return x;
 }
 
-unsigned inc(const unsigned i) {
+int inc(int i) {
   return i + 1;
-  // return (unsigned)(1.01 * i);
+  // return (int)(1.01 * i);
   if (i < 1000)
     return i + 1;
   else
-    return (unsigned)(1.03 * i);
+    return (int)(1.03 * i);
 }
 
-FILE *open_file(const char *suffix) {
+FILE *open_file(char *suffix) {
   char fname[2 * BUFSIZ];
   strncpy(fname, "lanczos", BUFSIZ);
   strncat(fname, "_", 2);
@@ -42,7 +42,7 @@ FILE *open_file(const char *suffix) {
 
 void vec_norm_bench() {
   FILE *fp = open_file("vec-norm");
-  for (unsigned i = 1e4; i < 1e6; i = inc(i)) {
+  for (int i = 1e4; i < 1e6; i = inc(i)) {
     double *h_a = create_host_vec(i);
 #pragma nomp update(to : h_a[0, i])
 
@@ -65,7 +65,7 @@ void vec_norm_bench() {
 
 void vec_dot_bench() {
   FILE *fp = open_file("vec-dot-prod-01");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *h_c = create_host_vec(32);
@@ -103,7 +103,7 @@ void vec_dot_bench() {
 
 void vec_sclr_div_bench() {
   FILE *fp = open_file("vec-sclr-mul-sync");
-  for (unsigned i = 1; i < 5; i = inc(i)) {
+  for (int i = 1; i < 5; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
     double *h_c = (double *)malloc(sizeof(double) * i);
@@ -134,11 +134,11 @@ void vec_sclr_div_bench() {
 #pragma nomp sync
     t = clock() - t;
 
-    #pragma nomp update(from: h_b[0,i], h_a[0, i])
-    for(unsigned k=0; k < i; k++){
+#pragma nomp update(from : h_b[0, i], h_a[0, i])
+    for (int k = 0; k < i; k++) {
       printf("h_b[%d]: %f, h_a[%d]: %f \n", k, h_b[k], k, h_a[k]);
     }
-      // assert(fabs(h_b[k] - h_c[k])<10e-8);
+    // assert(fabs(h_b[k] - h_c[k])<10e-8);
 
     fprintf(fp, "%s,%s,%u,%u,%e,%e\n", "vec-sclr-mul", "nomp", 32, i,
             (double)t1 / (CLOCKS_PER_SEC * 1000),
@@ -153,7 +153,7 @@ void vec_sclr_div_bench() {
 
 void vec_add_bench() {
   FILE *fp = open_file("vec-add");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_c = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
@@ -193,7 +193,7 @@ void vec_add_bench() {
 
 void mtx_col_copy_bench() {
   FILE *fp = open_file("mtx-col-copy");
-  for (unsigned i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 100; i < 1e4; i = inc(i)) {
     double *h_a = (double *)calloc(i * i, sizeof(double));
     double *h_b = create_host_vec(i);
 
@@ -219,7 +219,7 @@ void mtx_col_copy_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("calc-w");
-  for (unsigned i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 100; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
 

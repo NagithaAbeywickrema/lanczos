@@ -22,23 +22,23 @@
 #define tfree(p) free_((void **)p)
 void free_(void **p) { free(*p), *p = NULL; }
 
-double *create_host_vec(const unsigned size) {
+double *create_host_vec(int size) {
   double *x = tcalloc(double, size);
-  for (unsigned i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     x[i] = (rand() + 1.0) / RAND_MAX;
 
   return x;
 }
 
-unsigned inc(const unsigned i) {
+int inc(int i) {
   return i + 1;
-  // return (unsigned)(1.01 * i);
+  // return (int)(1.01 * i);
   // if (i < 1000)
   // else
-  //   return (unsigned)(1.03 * i);
+  //   return (int)(1.03 * i);
 }
 
-FILE *open_file(const char *suffix) {
+FILE *open_file(char *suffix) {
   char fname[2 * BUFSIZ];
   strncpy(fname, "lanczos", BUFSIZ);
   strncat(fname, "_", 2);
@@ -53,7 +53,7 @@ FILE *open_file(const char *suffix) {
 
 void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("vec-norm");
-  for (unsigned i = 1e4; i < 1e6; i = inc(i)) {
+  for (int i = 1e4; i < 1e6; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -82,7 +82,7 @@ void vec_norm_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
 void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
                         cl_program prg) {
   FILE *fp = open_file("vec-sclr-div-ocl");
-  for (unsigned i = 1; i < 5; i = inc(i)) {
+  for (int i = 1; i < 5; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -114,8 +114,9 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
       ocl_mtx_sclr_div(ctx, queue, prg, d_a, d_b, 1 / 10, i);
     t = clock() - t;
 
-    err = clEnqueueReadBuffer(queue, d_b, CL_TRUE, 0, i * sizeof(double), h_b, 0, NULL, NULL);
-    for(int k=0; k< i; k++){
+    err = clEnqueueReadBuffer(queue, d_b, CL_TRUE, 0, i * sizeof(double), h_b,
+                              0, NULL, NULL);
+    for (int k = 0; k < i; k++) {
       printf("h_b[%d]: %f \n", k, h_b[k]);
     }
 
@@ -131,7 +132,7 @@ void vec_sclr_div_bench(cl_context ctx, cl_command_queue queue,
 void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
                         cl_program prg) {
   FILE *fp = open_file("mtx-col-copy");
-  for (unsigned i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 100; i < 1e4; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -161,7 +162,7 @@ void mtx_col_copy_bench(cl_context ctx, cl_command_queue queue,
 
 void calc_w_bench(cl_context ctx, cl_command_queue queue, cl_program prg) {
   FILE *fp = open_file("calc-w");
-  for (unsigned i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 100; i < 1e4; i = inc(i)) {
     cl_int err;
     cl_kernel knl;
     double *h_a = create_host_vec(i);
@@ -201,7 +202,7 @@ void lanczos_bench(int argc, char *argv[]) {
   cl_int err;
 
   cl_uint num_platforms;
-  const int platform_id = 2;
+  int platform_id = 2;
   err = clGetPlatformIDs(0, NULL, &num_platforms);
   if (platform_id < 0 | platform_id >= num_platforms) {
     printf("Given platform id is invalid \n");
@@ -213,7 +214,7 @@ void lanczos_bench(int argc, char *argv[]) {
   free(cl_platforms);
 
   cl_uint num_devices;
-  const int device = 0;
+  int device = 0;
   err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
   if (device < 0 || device >= num_devices) {
     printf("Invalid device \n");
@@ -245,7 +246,7 @@ void lanczos_bench(int argc, char *argv[]) {
   fclose(kernelFile);
 
   program = clCreateProgramWithSource(context, 1, (const char **)&kernelSource,
-                                      (const size_t *)&kernelSize, &err);
+                                      (size_t *)&kernelSize, &err);
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 
   // bench

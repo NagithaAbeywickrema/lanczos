@@ -7,13 +7,13 @@ project(
 
 option(ENABLE_SERIAL "Build RSB Serial" ON)
 option(ENABLE_NOMP "Build RSB Nomp" ON)
-option(ENABLE_CUDA "Build RSB Cuda" ON)
+option(ENABLE_CUDA "Build RSB Cuda" OFF)
 option(ENABLE_SYCL "Build RSB SYCL" OFF)
 option(ENABLE_OPENCL "Build RSB OpenCL" ON)
 option(ENABLE_BENCH "Bench kernels" ON)
 option(NOMP_BENCH "Bench nomp" ON)
 option(OCL_BENCH "Bench ocl" ON)
-option(CUDA_BENCH "Bench cuda" ON)
+option(CUDA_BENCH "Bench cuda" OFF)
 
 if(ENABLE_SERIAL)
   set(SOURCES
@@ -117,6 +117,7 @@ if(ENABLE_BENCH)
         src/print-helper.c
         src/lanczos-aux.c
         src/kernels-nomp.c
+        src/kernels-serial.c
         src/lanczos-aux.h
         src/matrix-util.h
         src/matrix-util.c
@@ -137,6 +138,7 @@ if(ENABLE_BENCH)
       src/print-helper.c
       src/lanczos-aux.c
       src/kernels-ocl.c
+      src/kernels-serial.c
       src/lanczos-aux.h
       src/matrix-util.h
       src/matrix-util.c

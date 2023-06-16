@@ -12,23 +12,23 @@
 #define tfree(p) free_((void **)p)
 void free_(void **p) { free(*p), *p = NULL; }
 
-double *create_host_vec(const unsigned size) {
+double *create_host_vec( int size) {
   double *x = tcalloc(double, size);
-  for (unsigned i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     x[i] = (rand() + 1.0) / RAND_MAX;
 
   return x;
 }
 
-unsigned inc(const unsigned i) {
-  return (unsigned)(1.01 * i);
+int inc( int i) {
+  return (int)(1.01 * i);
   if (i < 1000)
     return i + 1;
   else
-    return (unsigned)(1.03 * i);
+    return (int)(1.03 * i);
 }
 
-FILE *open_file(const char *suffix) {
+FILE *open_file( char *suffix) {
   char fname[2 * BUFSIZ];
   strncpy(fname, "lanczos", BUFSIZ);
   strncat(fname, "_", 2);
@@ -42,7 +42,7 @@ FILE *open_file(const char *suffix) {
 }
 void vec_sclr_mul_bench() {
   FILE *fp = open_file("vec-sclr-mul-cuda");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -52,7 +52,7 @@ void vec_sclr_mul_bench() {
     cudaMalloc((void **)&d_b, (i) * sizeof(double));
 
     cudaMemcpy(d_a, h_a, (i) * sizeof(double), cudaMemcpyHostToDevice);
-    const unsigned grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
+     int grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // Warmup
     for (int j = 0; j < 1000; j++)
       cuda_vec_sclr_mul(d_a, d_b, 1 / 10, i, grid_size, BLOCK_SIZE);
@@ -75,7 +75,7 @@ void vec_sclr_mul_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("calc_w_cuda");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i * i);
 
@@ -87,7 +87,7 @@ void calc_w_bench() {
 
     cudaMemcpy(d_a, h_a, (i) * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, h_b, (i * i) * sizeof(double), cudaMemcpyHostToDevice);
-    const unsigned grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
+     int grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // Warmup
     for (int j = 0; j < 1000; j++)
       cuda_calc_w(d_a, 10, d_b, 20, i - 1, i, grid_size, BLOCK_SIZE);
@@ -110,7 +110,7 @@ void calc_w_bench() {
 
 void vec_norm_bench() {
   FILE *fp = open_file("vec-norm");
-  for (unsigned i = 1; i < 1e6; i = inc(i)) {
+  for (int i = 1; i < 1e6; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a;
     cudaMalloc((void **)&d_a, i * sizeof(double));
@@ -137,7 +137,7 @@ void vec_norm_bench() {
 
 void mtx_col_copy_bench() {
   FILE *fp = open_file("mtx-col-copy");
-  for (unsigned i = 1; i < 1e4; i = inc(i)) {
+  for (int i = 1; i < 1e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a, *d_b;
     cudaMalloc((void **)&d_a, i * sizeof(double));
@@ -164,7 +164,7 @@ void mtx_col_copy_bench() {
 
 void create_roofline() {
   FILE *fp = open_file("roofline_data");
-  for (unsigned i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -175,7 +175,7 @@ void create_roofline() {
 
     cudaMemcpy(d_a, h_a, (i) * sizeof(double), cudaMemcpyHostToDevice);
 
-    const unsigned grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
+     int grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     // Warmup d2d
     for (int j = 0; j < 1000; j++)
