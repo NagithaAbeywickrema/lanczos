@@ -106,15 +106,14 @@ __global__ void cuda_calc_w_knl(double *w_vec, double alpha, double *orth_mtx,
   }
 }
 
-double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size) {
-  int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-  int shared_data_size = BLOCK_SIZE * sizeof(double);
+double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size, int grid_size, int block_size){
+  int shared_data_size = block_size * sizeof(double);
 
   double *d_result;
 
   cudaMalloc((void **)&d_result, grid_size * sizeof(double));
 
-  cuda_vec_dot_knl<<<grid_size, BLOCK_SIZE, shared_data_size>>>(
+  cuda_vec_dot_knl<<<grid_size, block_size, shared_data_size>>>(
       d_a_vec, d_b_vec, d_result, size);
 
   cudaDeviceSynchronize();
@@ -133,8 +132,8 @@ double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size) {
   return result;
 }
 
-double cuda_vec_norm(double *d_a_vec, int size) {
-  double sum_of_prod = cuda_vec_dot(d_a_vec, d_a_vec, size);
+double cuda_vec_norm(double *d_a_vec, int size, int grid_size, int block_size) {
+  double sum_of_prod = cuda_vec_dot(d_a_vec, d_a_vec, size, grid_size, block_size);
   return sqrt(sum_of_prod);
 }
 
@@ -158,13 +157,12 @@ void cuda_d2d_mem_cpy(double *a, double *b, int size, int grid_size,
   cuda_d2d_mem_cpy_knl<<<grid_size, block_size>>>(a, b, size);
 }
 
-void cuda_mtx_col_copy(double *d_vec, double *d_mtx, int col_index, int size) {
-  int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+void cuda_mtx_col_copy(double *d_vec, double *d_mtx, int col_index, int size, int grid_size,
+                      int block_size) {
 
-  cuda_mtx_col_copy_knl<<<grid_size, BLOCK_SIZE>>>(d_vec, d_mtx, col_index,
+  cuda_mtx_col_copy_knl<<<grid_size, block_size>>>(d_vec, d_mtx, col_index,
                                                    size);
 
-  cudaDeviceSynchronize();
 }
 
 void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
@@ -174,7 +172,6 @@ void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
   cuda_mtx_vec_mul_knl<<<grid_size, BLOCK_SIZE>>>(d_a_mtx, d_b_vec, d_out_vec,
                                                   num_rows, num_cols);
 
-  cudaDeviceSynchronize();
 }
 
 void cuda_spmv(int *d_a_row_ptrs, int *d_a_columns, double *d_a_vals,
@@ -185,7 +182,6 @@ void cuda_spmv(int *d_a_row_ptrs, int *d_a_columns, double *d_a_vals,
                                            d_b_vec, d_out_vec, num_rows,
                                            num_cols);
 
-  cudaDeviceSynchronize();
 }
 
 void cuda_calc_w_init(double *d_w_vec, double alpha, double *d_orth_mtx,
@@ -195,7 +191,6 @@ void cuda_calc_w_init(double *d_w_vec, double alpha, double *d_orth_mtx,
   cuda_calc_w_init_knl<<<grid_size, BLOCK_SIZE>>>(d_w_vec, alpha, d_orth_mtx,
                                                   col_index, size);
 
-  cudaDeviceSynchronize();
 }
 
 void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_mtx, double beta,
@@ -204,5 +199,4 @@ void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_mtx, double beta,
   cuda_calc_w_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_mtx, beta,
                                              col_index, size);
 
-  cudaDeviceSynchronize();
 }

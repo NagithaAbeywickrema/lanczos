@@ -36,13 +36,14 @@ void nomp_d2d_mem_cpy(double *a, double *b, int N);
 void nomp_vec_add(double *a_vec, double *b_vec, double *out_vec, int size);
 
 // Parallelized functions of Lanczos routine implemented using Cuda.
-double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size);
-double cuda_vec_norm(double *d_a_vec, int size);
+double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size, int grid_size, int block_size);
+double cuda_vec_norm(double *d_a_vec, int size, int grid_size, int block_size);
 void cuda_vec_sclr_mul(double *d_a_vec, double *d_out_vec, double sclr,
                        int size, int grid_size, int block_size);
 void cuda_vec_sclr_div(double *d_a_vec, double *d_out_vec, double sclr,
                        int size, int grid_size, int block_size);
-void cuda_mtx_col_copy(double *d_vec, double *d_mtx, int col_index, int size);
+void cuda_mtx_col_copy(double *d_vec, double *d_mtx, int col_index, int size, int grid_size,
+                      int block_size);
 void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
                       int num_rows, int num_cols);
 void cuda_spmv(int *d_a_row_ptrs, int *d_a_columns, double *d_a_vals,

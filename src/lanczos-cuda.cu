@@ -12,7 +12,8 @@ void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
   int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
   for (int i = 0; i < m; i++) {
-    beta[i] = cuda_vec_norm(d_w_vec, size);
+    beta[i] = cuda_vec_norm(d_w_vec, size, grid_size,
+                        BLOCK_SIZE);
 
     if (fabs(beta[i] - 0) > 1e-8) {
       cuda_vec_sclr_div(d_w_vec, d_orth_vec, 1 / beta[i], size, grid_size,
@@ -22,16 +23,19 @@ void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
         orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
       cudaMemcpy(d_orth_vec, orth_vec, (size) * sizeof(double),
                  cudaMemcpyHostToDevice);
-      double norm_val = cuda_vec_norm(d_orth_vec, size);
+      double norm_val = cuda_vec_norm(d_orth_vec, size, grid_size,
+                        BLOCK_SIZE);
       cuda_vec_sclr_div(d_orth_vec, d_orth_vec, 1 / norm_val, size, grid_size,
                         BLOCK_SIZE);
     }
 
-    cuda_mtx_col_copy(d_orth_vec, d_orth_mtx, i, size);
+    cuda_mtx_col_copy(d_orth_vec, d_orth_mtx, i, size, grid_size,
+                        BLOCK_SIZE);
 
     cuda_spmv(d_row_ptrs, d_columns, d_vals, d_orth_vec, d_w_vec, size, size);
 
-    alpha[i] = cuda_vec_dot(d_orth_vec, d_w_vec, size);
+    alpha[i] = cuda_vec_dot(d_orth_vec, d_w_vec, size, grid_size,
+                        BLOCK_SIZE);
 
     if (i == 0) {
       cuda_calc_w_init(d_w_vec, alpha[i], d_orth_mtx, i, size);

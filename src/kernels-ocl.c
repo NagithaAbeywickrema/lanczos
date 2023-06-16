@@ -106,7 +106,7 @@ void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
 
   err = clSetKernelArg(knl, 0, sizeof(cl_mem), &d_vec);
   err |= clSetKernelArg(knl, 1, sizeof(cl_mem), &d_mtx);
-  err |= clSetKernelArg(knl, 2, sizeof(double), &col_index);
+  err |= clSetKernelArg(knl, 2, sizeof(unsigned), &col_index);
   err |= clSetKernelArg(knl, 3, sizeof(int), &size);
 
   err = clEnqueueNDRangeKernel(queue, knl, 1, NULL, &global_size, &local_size,

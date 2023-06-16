@@ -193,7 +193,7 @@ void vec_add_bench() {
 
 void mtx_col_copy_bench() {
   FILE *fp = open_file("mtx-col-copy");
-  for (int i = 100; i < 1e4; i = inc(i)) {
+  for (int i = 100; i < 3e4; i = inc(i)) {
     double *h_a = (double *)calloc(i * i, sizeof(double));
     double *h_b = create_host_vec(i);
 
