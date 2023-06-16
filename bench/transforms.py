@@ -71,5 +71,5 @@ def spmv(knl, context):
         knl, "row", 32, inner_iname="row_inner", outer_iname="row_outer"
     )
 
-    # knl = custom_optimize_reduction(knl)
+    knl = lp.tag_inames(knl, {"row_outer": "g.0", "row_inner": "l.0", "jj": "for"})
     return knl
