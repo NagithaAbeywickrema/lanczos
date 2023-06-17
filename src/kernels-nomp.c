@@ -49,7 +49,6 @@ void nomp_vec_copy(double *vec, double *out, int N) {
     out[i] = vec[i];
 }
 
-
 void nomp_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
                       int num_rows, int num_cols) {
 #pragma nomp for transform("transforms", "mat_vec_mul")
@@ -82,10 +81,10 @@ void nomp_calc_w_init(double *w_vec, double alpha, double *orth_vec, int size) {
   }
 }
 
-void nomp_calc_w(double *w_vec, double alpha,double *orth_vec, double *orth_vec_pre, double beta, int size) {
+void nomp_calc_w(double *w_vec, double alpha, double *orth_vec,
+                 double *orth_vec_pre, double beta, int size) {
 #pragma nomp for transform("transforms", "stream_data_flow_loop")
   for (int j = 0; j < size; j++) {
-    w_vec[j] = w_vec[j] - alpha * orth_vec[j] -
-               beta * orth_vec_pre[j];
+    w_vec[j] = w_vec[j] - alpha * orth_vec[j] - beta * orth_vec_pre[j];
   }
 }

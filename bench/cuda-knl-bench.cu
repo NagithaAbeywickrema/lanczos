@@ -40,7 +40,6 @@ void vec_sclr_mul_bench() {
     tfree(&h_a);
     tfree(&w_vec);
     tfree(&out);
-    
   }
   fclose(fp);
 }
@@ -196,7 +195,7 @@ void vec_dot_bench() {
 
     double dot = serial_vec_dot(h_a, h_b, i);
 
-    assert((fabs(dot - out)/i) < EPS);
+    assert((fabs(dot - out) / i) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-dot", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));

@@ -6,13 +6,11 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
                   double *beta, double *w_vec, double *orth_vec,
                   double *orth_vec_pre, int m, int size) {
   for (int i = 0; i < m; i++) {
-    if (i > 0){
+    if (i > 0) {
       beta[i] = nomp_vec_norm(w_vec, size);
-      nomp_vec_copy(orth_vec, orth_vec_pre,size);
-    }
-    else
+      nomp_vec_copy(orth_vec, orth_vec_pre, size);
+    } else
       beta[i] = 0;
-    
 
     if (fabs(beta[i] - 0) > EPS) {
       nomp_vec_sclr_mul(w_vec, orth_vec, 1 / beta[i], size);
@@ -30,7 +28,7 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
     if (i == 0) {
       nomp_calc_w_init(w_vec, alpha[i], orth_vec, size);
     } else {
-      nomp_calc_w(w_vec, alpha[i],orth_vec, orth_vec_pre, beta[i],size);
+      nomp_calc_w(w_vec, alpha[i], orth_vec, orth_vec_pre, beta[i], size);
     }
   }
 }
@@ -46,9 +44,10 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
 
 #pragma nomp init(argc, argv)
 
-#pragma nomp update(to : row_ptrs[0, size + 1], columns[0, val_count],         \
-                        vals[0, val_count], orth_vec_pre[0, size],             \
-                        w_vec[0, size])
+#pragma nomp update(to                                                         \
+                    : row_ptrs[0, size + 1], columns[0, val_count],            \
+                      vals[0, val_count], orth_vec_pre[0, size],               \
+                      w_vec[0, size])
 
   // Warm up runs
   for (int k = 0; k < 10; k++)
@@ -65,9 +64,10 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
-#pragma nomp update(free : row_ptrs[0, size + 1], columns[0, val_count],       \
-                        vals[0, val_count], orth_vec_pre[0, size ],             \
-                        w_vec[0, size], orth_vec[0, size])
+#pragma nomp update(free                                                       \
+                    : row_ptrs[0, size + 1], columns[0, val_count],            \
+                      vals[0, val_count], orth_vec_pre[0, size],               \
+                      w_vec[0, size], orth_vec[0, size])
 
 #pragma nomp finalize
 

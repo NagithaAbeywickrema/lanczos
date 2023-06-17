@@ -6,11 +6,10 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
                   double *beta, double *w_vec, double *orth_vec,
                   double *orth_vec_pre, int m, int size) {
   for (int i = 0; i < m; i++) {
-    if (i > 0){
+    if (i > 0) {
       beta[i] = serial_vec_norm(w_vec, size);
-      serial_vec_copy(orth_vec, orth_vec_pre,size);
-      }
-    else
+      serial_vec_copy(orth_vec, orth_vec_pre, size);
+    } else
       beta[i] = 0;
 
     if (fabs(beta[i] - 0) > EPS) {

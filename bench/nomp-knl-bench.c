@@ -12,19 +12,19 @@ void vec_norm_bench() {
     // Warmup
     for (int j = 0; j < WARMUP; j++)
       nomp_vec_norm(h_a, i);
-  
+
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
       n_norm = nomp_vec_norm(h_a, i);
     t = clock() - t;
 
-    assert((fabs(s_norm - n_norm)/i) < EPS);
+    assert((fabs(s_norm - n_norm) / i) < EPS);
     fprintf(fp, "%s,%s,%u,%e\n", "vec-norm", "nomp", i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i])
     tfree(&h_a);
   }
-   fclose(fp);
+  fclose(fp);
 }
 
 void vec_dot_bench() {
@@ -44,7 +44,7 @@ void vec_dot_bench() {
     for (int j = 0; j < TRAILS; j++)
       n_dot = nomp_vec_dot(h_a, h_b, i);
     t = clock() - t;
-    assert((fabs(s_dot - n_dot)/i)< EPS);
+    assert((fabs(s_dot - n_dot) / i) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-dot-prod", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -60,7 +60,7 @@ void vec_sclr_mul_bench() {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
     double *h_c = (double *)malloc(sizeof(double) * i);
-    serial_vec_sclr_mul(h_a, h_c, 1/10, i);
+    serial_vec_sclr_mul(h_a, h_c, 1 / 10, i);
 #pragma nomp update(to : h_a[0, i])
 #pragma nomp update(to : h_b[0, i])
 
@@ -75,8 +75,8 @@ void vec_sclr_mul_bench() {
 #pragma nomp sync
     t = clock() - t;
 
-    #pragma nomp update(from: h_b[0, i])
-    for(int k=0; k< i; k++)
+#pragma nomp update(from : h_b[0, i])
+    for (int k = 0; k < i; k++)
       assert(fabs(h_b[k] - h_c[k]) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-mul", "nomp", 32, i,
@@ -111,8 +111,8 @@ void vec_sclr_div_bench() {
 #pragma nomp sync
     t = clock() - t;
 
-    #pragma nomp update(from: h_b[0, i])
-    for(int k=0; k< i; k++)
+#pragma nomp update(from : h_b[0, i])
+    for (int k = 0; k < i; k++)
       assert(fabs(h_b[k] - h_c[k]) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-sclr-div", "nomp", 32, i,
@@ -145,9 +145,9 @@ void mtx_col_copy_bench() {
       nomp_mtx_col_copy(h_b, h_a, i - 1, i);
     t = clock() - t;
 
-    #pragma nomp update(from: h_a[0, i*i])
-    for(int k=0; k<i; k++)
-      assert(fabs(h_a[k+i*(i-1)]- h_c[k+i*(i-1)]) < EPS);
+#pragma nomp update(from : h_a[0, i * i])
+    for (int k = 0; k < i; k++)
+      assert(fabs(h_a[k + i * (i - 1)] - h_c[k + i * (i - 1)]) < EPS);
 
     fprintf(fp, "%s,%s,%u,%e\n", "mtx-col-copy", "nomp", i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
@@ -166,22 +166,22 @@ void calc_w_bench() {
     double *h_c = h_a;
     serial_calc_w(h_c, 2, h_b, h_b_pre, 2, i);
 
-#pragma nomp update(to : h_a[0, i], h_b[0, i], h_b_pre[0,i])
+#pragma nomp update(to : h_a[0, i], h_b[0, i], h_b_pre[0, i])
 
     // Warmup
     for (int j = 0; j < WARMUP; j++)
-      nomp_calc_w(h_a, 2, h_b,h_b_pre, 2, i); // col_index
+      nomp_calc_w(h_a, 2, h_b, h_b_pre, 2, i); // col_index
 
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      nomp_calc_w(h_a, 2, h_b,h_b_pre, 2, i);
+      nomp_calc_w(h_a, 2, h_b, h_b_pre, 2, i);
     t = clock() - t;
 
-    #pragma nomp update(from: h_a[0, i])
-    for(int k=0; k<i; k++)
+#pragma nomp update(from : h_a[0, i])
+    for (int k = 0; k < i; k++)
       assert(fabs(h_a[k] - h_c[k]) < EPS);
 
-    fprintf(fp, "%s,%s,%u,%u,%e\n", "calc-w", "nomp",32, i,
+    fprintf(fp, "%s,%s,%u,%u,%e\n", "calc-w", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i], h_b[0, i])
     tfree(&h_a), tfree(&h_b);
@@ -201,8 +201,9 @@ void spmv_bench() {
     double *sw_vec = (double *)calloc(i, sizeof(double));
     serial_spmv(row_ptrs, columns, vals, h_orth_vec, sw_vec, i, i);
 
-#pragma nomp update(to : row_ptrs[0, i + 1], columns[0, val_count],            \
-                        vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
+#pragma nomp update(to                                                         \
+                    : row_ptrs[0, i + 1], columns[0, val_count],               \
+                      vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
 
     // Warmup
     for (int j = 0; j < WARMUP; j++)
@@ -213,14 +214,15 @@ void spmv_bench() {
       nomp_spmv(row_ptrs, columns, vals, h_orth_vec, w_vec, i, i);
     t = clock() - t;
 
-    #pragma nomp update(from: w_vec[0, i])
-    for(int k=0; k<i;k++)
+#pragma nomp update(from : w_vec[0, i])
+    for (int k = 0; k < i; k++)
       assert(fabs(w_vec[k] - sw_vec[k]) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e,%u\n", "spmv", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS), val_count);
-#pragma nomp update(free : row_ptrs[0, i + 1], columns[0, val_count],          \
-                        vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
+#pragma nomp update(free                                                       \
+                    : row_ptrs[0, i + 1], columns[0, val_count],               \
+                      vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
     tfree(&lap);
     tfree(&vals);
     tfree(&row_ptrs);

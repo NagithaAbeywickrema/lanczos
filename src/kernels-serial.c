@@ -58,15 +58,16 @@ void serial_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec,
   }
 }
 
-void serial_calc_w_init(double *w_vec, double alpha, double *orth_vec, int size) {
+void serial_calc_w_init(double *w_vec, double alpha, double *orth_vec,
+                        int size) {
   for (int j = 0; j < size; j++) {
     w_vec[j] = w_vec[j] - alpha * orth_vec[j];
   }
 }
 
-void serial_calc_w(double *w_vec, double alpha,double *orth_vec, double *orth_vec_pre, double beta, int size) {
+void serial_calc_w(double *w_vec, double alpha, double *orth_vec,
+                   double *orth_vec_pre, double beta, int size) {
   for (int j = 0; j < size; j++) {
-    w_vec[j] = w_vec[j] - alpha * orth_vec[j] -
-               beta * orth_vec_pre[j];
+    w_vec[j] = w_vec[j] - alpha * orth_vec[j] - beta * orth_vec_pre[j];
   }
 }
