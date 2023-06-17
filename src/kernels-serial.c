@@ -31,6 +31,9 @@ void serial_mtx_col_copy(double *vec, double *mtx, int col_index, int size) {
 
   memcpy(mtx + size * col_index, vec, sizeof(double) * size);
 }
+void serial_vec_copy(double *vec, double *out, int size) {
+  memcpy(out, vec, sizeof(double) * size);
+}
 
 void serial_mtx_vec_mul(double *a_mtx, double *b_vec, double *out_vec,
                         int num_rows, int num_cols) {
@@ -55,17 +58,15 @@ void serial_spmv(int *a_row_ptrs, int *a_columns, double *a_vals, double *b_vec,
   }
 }
 
-void serial_calc_w_init(double *w_vec, double alpha, double *orth_mtx,
-                        int col_index, int size) {
+void serial_calc_w_init(double *w_vec, double alpha, double *orth_vec, int size) {
   for (int j = 0; j < size; j++) {
-    w_vec[j] = w_vec[j] - alpha * orth_mtx[j + size * col_index];
+    w_vec[j] = w_vec[j] - alpha * orth_vec[j];
   }
 }
 
-void serial_calc_w(double *w_vec, double alpha, double *orth_mtx, double beta,
-                   int col_index, int size) {
+void serial_calc_w(double *w_vec, double alpha,double *orth_vec, double *orth_vec_pre, double beta, int size) {
   for (int j = 0; j < size; j++) {
-    w_vec[j] = w_vec[j] - alpha * orth_mtx[j + size * col_index] -
-               beta * orth_mtx[j + size * (col_index - 1)];
+    w_vec[j] = w_vec[j] - alpha * orth_vec[j] -
+               beta * orth_vec_pre[j];
   }
 }

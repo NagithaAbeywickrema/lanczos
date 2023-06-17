@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
+#include "print-helper.h"
 #define MAX 1000000
 #define EPS 1e-8
 #define TRIALS 2

@@ -1,6 +1,6 @@
 #include "lanczos.h"
 #include "matrix-util.h"
-#include "print-helper.h"
+
 
 #if defined(ENABLE_BENCH)
 #include "../bench/bench.h"

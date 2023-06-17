@@ -161,19 +161,20 @@ void calc_w_bench() {
   FILE *fp = open_file("lanczos_calc_w_data");
   for (int i = 1e2; i < 3e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
-    double *h_b = create_host_vec(i * i);
+    double *h_b = create_host_vec(i);
+    double *h_b_pre = create_host_vec(i);
     double *h_c = h_a;
-    serial_calc_w(h_c, 2, h_b, 2, i-1, i);
+    serial_calc_w(h_c, 2, h_b, h_b_pre, 2, i);
 
-#pragma nomp update(to : h_a[0, i], h_b[0, i * i])
+#pragma nomp update(to : h_a[0, i], h_b[0, i], h_b_pre[0,i])
 
     // Warmup
     for (int j = 0; j < WARMUP; j++)
-      nomp_calc_w(h_a, 2, h_b, 2, i - 1, i); // col_index
+      nomp_calc_w(h_a, 2, h_b,h_b_pre, 2, i); // col_index
 
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      nomp_calc_w(h_a, 2, h_b, 2, i - 1, i);
+      nomp_calc_w(h_a, 2, h_b,h_b_pre, 2, i);
     t = clock() - t;
 
     #pragma nomp update(from: h_a[0, i])
@@ -182,7 +183,7 @@ void calc_w_bench() {
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc-w", "nomp",32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
-#pragma nomp update(free : h_a[0, i], h_b[0, i * i])
+#pragma nomp update(free : h_a[0, i], h_b[0, i])
     tfree(&h_a), tfree(&h_b);
   }
 }
