@@ -183,8 +183,8 @@ void calc_w_bench() {
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc-w", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
-#pragma nomp update(free : h_a[0, i], h_b[0, i])
-    tfree(&h_a), tfree(&h_b);
+#pragma nomp update(free : h_a[0, i], h_b[0, i], h_b_pre[0, i])
+    tfree(&h_a), tfree(&h_b), tfree(&h_b_pre);
   }
 }
 
