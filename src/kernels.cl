@@ -21,6 +21,13 @@ __kernel void mtx_col_copy(__global double *v, __global double *V, int i,
     V[id + n * i] = v[id];
 };
 
+__kernel void vec_copy(__global double *v, __global double *v_pre, int n) {
+  int id = get_global_id(0);
+
+  if (id < n)
+    v_pre[id] = v[id];
+};
+
 __kernel void mtx_vec_mul(__global double *a, __global double *b,
                           __global double *c, int h_a, int w_a) {
   int id = get_global_id(0);
@@ -69,18 +76,18 @@ __kernel void vec_dot(__global double *v, __global double *w,
     v_r[get_group_id(0)] = smemory[0];
 };
 
-__kernel void calc_w_init(__global double *w, __global double *V, double alpha,
-                          int i, int n) {
+__kernel void calc_w_init(__global double *w, __global double *orth_vec,
+                          double alpha, int n) {
   int id = get_global_id(0);
 
   if (id < n)
-    w[id] = w[id] - alpha * V[id + n * i];
+    w[id] = w[id] - alpha * orth_vec[id];
 };
 
-__kernel void calc_w(__global double *w, __global double *V, double alpha,
-                     double beta, int i, int n) {
+__kernel void calc_w(__global double *w, __global double *v,
+                     __global double *v_pre, double alpha, double beta, int n) {
   int id = get_global_id(0);
 
   if (id < n)
-    w[id] = w[id] - alpha * V[id + n * i] - beta * V[id + n * (i - 1)];
+    w[id] = w[id] - alpha * v[id] - beta * v_pre[id];
 };

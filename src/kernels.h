@@ -111,10 +111,12 @@ double ocl_vec_dot(cl_context ctx, cl_command_queue queue, cl_program prg,
                    cl_mem d_a_vec, cl_mem d_b_vec, int size);
 double ocl_vec_norm(cl_context ctx, cl_command_queue queue, cl_program prg,
                     cl_mem d_a_vec, int size);
-void ocl_mtx_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
+void ocl_vec_sclr_div(cl_context ctx, cl_command_queue queue, cl_program prg,
                       cl_mem d_a_vec, cl_mem d_out_vec, double sclr, int size);
 void ocl_mtx_col_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
                       cl_mem d_vec, cl_mem d_mtx, int col_index, int size);
+void ocl_vec_copy(cl_context ctx, cl_command_queue queue, cl_program prg,
+                  cl_mem d_vec, cl_mem d_vec_pre, int size);
 void ocl_mtx_vec_mul(cl_context ctx, cl_command_queue queue, cl_program prg,
                      cl_mem d_a_mtx, cl_mem d_b_vec, cl_mem d_out_vec,
                      int num_rows, int num_cols);
@@ -122,11 +124,10 @@ void ocl_spmv(cl_context ctx, cl_command_queue queue, cl_program prg,
               cl_mem d_a_row_ptrs, cl_mem d_a_columns, cl_mem d_a_vals,
               cl_mem d_b_vec, cl_mem d_out_vec, int num_rows, int num_cols);
 void ocl_calc_w_init(cl_context ctx, cl_command_queue queue, cl_program prg,
-                     cl_mem d_w_vec, double alpha, cl_mem d_orth_mtx,
-                     int col_index, int size);
+                     cl_mem d_w_vec, double alpha, cl_mem d_orth_vec, int size);
 void ocl_calc_w(cl_context ctx, cl_command_queue queue, cl_program prg,
-                cl_mem d_w_vec, double alpha, cl_mem d_orth_mtx, double beta,
-                int col_index, int size);
+                cl_mem d_w_vec, double alpha, cl_mem d_orth_vec,
+                cl_mem d_orth_vec_pre, double beta, int size);
 void ocl_d2d_mem_cpy(cl_context ctx, cl_command_queue queue, cl_program prg,
                      cl_mem d_a_vec, cl_mem d_out_vec, int size);
 #endif
