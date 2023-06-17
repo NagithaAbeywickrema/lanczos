@@ -10,7 +10,7 @@
 
 
 #define BLOCK_SIZE 32
-#define TRAILS 100
+#define TRAILS 1000
 #define WARMUP 100
 #define MAX_SOURCE_SIZE (0x100000)
 
