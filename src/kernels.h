@@ -65,34 +65,35 @@ void cuda_d2d_mem_cpy(double *a, double *b, int size, int grid_size,
 
 #if defined(ENABLE_SYCL)
 
-double sycl_mtx_norm(sycl::buffer<double> w, int size, sycl::queue queue,sycl::nd_range<1> nd_range);
+double sycl_mtx_norm(sycl::buffer<double> w, int size, sycl::queue queue,
+                     sycl::nd_range<1> nd_range);
 void sycl_mtx_sclr_div(sycl::buffer<double> in_buf, double scalar,
                        sycl::buffer<double> out_buf, int size,
-                       sycl::queue queue,sycl::nd_range<1> nd_range);
+                       sycl::queue queue, sycl::nd_range<1> nd_range);
 void sycl_mtx_sclr_mul(sycl::buffer<double> in_buf, double scalar,
                        sycl::buffer<double> out_buf, int size,
-                       sycl::queue queue,sycl::nd_range<1> nd_range);
+                       sycl::queue queue, sycl::nd_range<1> nd_range);
 void sycl_mtx_col_copy(sycl::buffer<double> v_temp_buf,
                        sycl::buffer<double> v_buf, int j, int size,
-                       sycl::queue queue,sycl::nd_range<1> nd_range);
-void sycl_vec_copy(sycl::buffer<double> v_buf,
-                       sycl::buffer<double> out_buf, int size,
                        sycl::queue queue, sycl::nd_range<1> nd_range);
+void sycl_vec_copy(sycl::buffer<double> v_buf, sycl::buffer<double> out_buf,
+                   int size, sycl::queue queue, sycl::nd_range<1> nd_range);
 void sycl_mtx_vec_mul(sycl::buffer<double> a_buf, sycl::buffer<double> b_buf,
                       sycl::buffer<double> out_buf, int height_a, int width_a,
-                      sycl::queue queue,sycl::nd_range<1> nd_range);
+                      sycl::queue queue, sycl::nd_range<1> nd_range);
 double sycl_mtx_dot(sycl::buffer<double> v_buf, sycl::buffer<double> w_buf,
-                    int size, sycl::queue queue,sycl::nd_range<1> nd_range);
+                    int size, sycl::queue queue, sycl::nd_range<1> nd_range);
 void sycl_calc_w_init(sycl::buffer<double> w_buf, double alpha,
-                      sycl::buffer<double> v_buf, int size,
-                      sycl::queue queue,sycl::nd_range<1> nd_range);
+                      sycl::buffer<double> v_buf, int size, sycl::queue queue,
+                      sycl::nd_range<1> nd_range);
 void sycl_calc_w(sycl::buffer<double> w_buf, double alpha,
-                 sycl::buffer<double> v_buf,sycl::buffer<double> v_pre_buf, double beta,int size,
-                 sycl::queue queue,sycl::nd_range<1> nd_range);
+                 sycl::buffer<double> v_buf, sycl::buffer<double> v_pre_buf,
+                 double beta, int size, sycl::queue queue,
+                 sycl::nd_range<1> nd_range);
 void sycl_spmv(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
                sycl::buffer<double> a_vals_buf, sycl::buffer<double> b_buf,
                sycl::buffer<double> out_buf, int height_a, int width_a,
-               sycl::queue queue,sycl::nd_range<1> nd_range);
+               sycl::queue queue, sycl::nd_range<1> nd_range);
 #endif
 
 // Parallelized functions of Lanczos routine implemented using Opencl.

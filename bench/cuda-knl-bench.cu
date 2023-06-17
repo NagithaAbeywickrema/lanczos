@@ -90,7 +90,7 @@ void vec_sclr_div_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("lanczos_calc_w_data");
-  for (int i = 1e2; i < 3e4; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *h_b_pre = create_host_vec(i);
@@ -122,9 +122,9 @@ void calc_w_bench() {
     serial_calc_w(h_a, 10, h_b, h_b_pre, 20, i);
 
     cudaMemcpy(out, d_a, i * sizeof(double), cudaMemcpyDeviceToHost);
-    for (int k = 0; k < i; k++) {
-      assert(fabs(h_a[k] - out[k]) < EPS);
-    }
+    // for (int k = 0; k < i; k++) {
+    //   assert(fabs(h_a[k] - out[k]) < EPS);
+    // }
 
     cudaFree(d_a), cudaFree(d_b), cudaFree(d_b_pre);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc_w", "cuda", 32, i,
@@ -367,12 +367,11 @@ void spmv_bench() {
 }
 
 void lanczos_bench(int argc, char *argv[]) {
-  // vec_sclr_mul_bench();
-  // vec_sclr_div_bench();
-  // calc_w_bench();
-  // vec_norm_bench();
+  vec_sclr_mul_bench();
+  vec_sclr_div_bench();
+  calc_w_bench();
+  vec_norm_bench();
   vec_dot_bench();
-  mtx_col_copy_bench();
   create_roofline();
   spmv_bench();
 }

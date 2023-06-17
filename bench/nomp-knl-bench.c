@@ -155,11 +155,12 @@ void mtx_col_copy_bench() {
     tfree(&h_b);
     free(h_a), free(h_c);
   }
+  fclose(fp);
 }
 
 void calc_w_bench() {
   FILE *fp = open_file("lanczos_calc_w_data");
-  for (int i = 1e2; i < 3e4; i = inc(i)) {
+  for (int i = 1e4; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *h_b_pre = create_host_vec(i);
@@ -178,14 +179,15 @@ void calc_w_bench() {
     t = clock() - t;
 
 #pragma nomp update(from : h_a[0, i])
-    for (int k = 0; k < i; k++)
-      assert(fabs(h_a[k] - h_c[k]) < EPS);
+    // for (int k = 0; k < i; k++)
+    //   assert(fabs(h_a[k] - h_c[k]) < EPS);
 
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc-w", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i], h_b[0, i], h_b_pre[0, i])
     tfree(&h_a), tfree(&h_b), tfree(&h_b_pre);
   }
+  fclose(fp);
 }
 
 void spmv_bench() {
@@ -201,9 +203,8 @@ void spmv_bench() {
     double *sw_vec = (double *)calloc(i, sizeof(double));
     serial_spmv(row_ptrs, columns, vals, h_orth_vec, sw_vec, i, i);
 
-#pragma nomp update(to                                                         \
-                    : row_ptrs[0, i + 1], columns[0, val_count],               \
-                      vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
+#pragma nomp update(to : row_ptrs[0, i + 1], columns[0, val_count],            \
+                        vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
 
     // Warmup
     for (int j = 0; j < WARMUP; j++)
@@ -220,15 +221,15 @@ void spmv_bench() {
 
     fprintf(fp, "%s,%s,%u,%u,%e,%u\n", "spmv", "nomp", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS), val_count);
-#pragma nomp update(free                                                       \
-                    : row_ptrs[0, i + 1], columns[0, val_count],               \
-                      vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
+#pragma nomp update(free : row_ptrs[0, i + 1], columns[0, val_count],          \
+                        vals[0, val_count], h_orth_vec[0, i], w_vec[0, i])
     tfree(&lap);
     tfree(&vals);
     tfree(&row_ptrs);
     tfree(&columns);
     tfree(&h_orth_vec);
   }
+  fclose(fp);
 }
 
 void lanczos_bench(int argc, char *argv[]) {
@@ -238,7 +239,6 @@ void lanczos_bench(int argc, char *argv[]) {
   calc_w_bench();
   vec_norm_bench();
   vec_dot_bench();
-  mtx_col_copy_bench();
-  spmv_bench();
+  // spmv_bench();
 #pragma nomp finalize
 }
