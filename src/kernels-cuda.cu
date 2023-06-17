@@ -57,6 +57,13 @@ __global__ void cuda_mtx_col_copy_knl(double *vec, double *mtx, int col_index,
     mtx[tid + size * col_index] = vec[tid];
 }
 
+__global__ void cuda_vec_copy_knl(double *vec, double *vec_pre, int size) {
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (tid < size)
+    vec_pre[tid] = vec[tid];
+}
+
 __global__ void cuda_mtx_vec_mul_knl(double *a_mtx, double *b_vec,
                                      double *out_vec, int num_rows,
                                      int num_cols) {
@@ -87,22 +94,20 @@ __global__ void cuda_spmv_knl(int *a_row_ptrs, int *a_columns, double *a_vals,
 }
 
 __global__ void cuda_calc_w_init_knl(double *w_vec, double alpha,
-                                     double *orth_mtx, int col_index,
-                                     int size) {
+                                     double *orth_vec, int size) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (tid < size) {
-    w_vec[tid] = w_vec[tid] - alpha * orth_mtx[tid + size * col_index];
+    w_vec[tid] = w_vec[tid] - alpha * orth_vec[tid];
   }
 }
 
-__global__ void cuda_calc_w_knl(double *w_vec, double alpha, double *orth_mtx,
-                                double beta, int col_index, int size) {
+__global__ void cuda_calc_w_knl(double *w_vec, double alpha, double *orth_vec,
+                                double *orth_vec_pre, double beta, int size) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (tid < size) {
-    w_vec[tid] = w_vec[tid] - alpha * orth_mtx[tid + size * col_index] -
-                 beta * orth_mtx[tid + size * (col_index - 1)];
+    w_vec[tid] = w_vec[tid] - alpha * orth_vec[tid] - beta * orth_vec_pre[tid];
   }
 }
 
@@ -161,9 +166,14 @@ void cuda_d2d_mem_cpy(double *a, double *b, int size, int grid_size,
 
 void cuda_mtx_col_copy(double *d_vec, double *d_mtx, int col_index, int size,
                        int grid_size, int block_size) {
-
   cuda_mtx_col_copy_knl<<<grid_size, block_size>>>(d_vec, d_mtx, col_index,
                                                    size);
+}
+
+void cuda_vec_copy(double *d_vec, double *d_vec_pre, int size, int grid_size,
+                   int block_size) {
+
+  cuda_vec_copy_knl<<<grid_size, block_size>>>(d_vec, d_vec_pre, size);
 }
 
 void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
@@ -183,16 +193,17 @@ void cuda_spmv(int *d_a_row_ptrs, int *d_a_columns, double *d_a_vals,
                                            num_cols);
 }
 
-void cuda_calc_w_init(double *d_w_vec, double alpha, double *d_orth_mtx,
-                      int col_index, int size, int grid_size, int block_size) {
+void cuda_calc_w_init(double *d_w_vec, double alpha, double *d_orth_vec,
+                      int size, int grid_size, int block_size) {
 
-  cuda_calc_w_init_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_mtx,
-                                                  col_index, size);
+  cuda_calc_w_init_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_vec,
+                                                  size);
 }
 
-void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_mtx, double beta,
-                 int col_index, int size, int grid_size, int block_size) {
+void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_vec,
+                 double *d_orth_vec_pre, double beta, int size, int grid_size,
+                 int block_size) {
 
-  cuda_calc_w_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_mtx, beta,
-                                             col_index, size);
+  cuda_calc_w_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_vec,
+                                             d_orth_vec_pre, beta, size);
 }

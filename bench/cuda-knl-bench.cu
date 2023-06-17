@@ -92,42 +92,46 @@ void calc_w_bench() {
   FILE *fp = open_file("lanczos_calc_w_data");
   for (int i = 1e2; i < 3e4; i = inc(i)) {
     double *h_a = create_host_vec(i);
-    double *h_b = create_host_vec(i * i);
+    double *h_b = create_host_vec(i);
+    double *h_b_pre = create_host_vec(i);
 
-    double *d_a, *d_b;
+    double *d_a, *d_b, *d_b_pre;
 
     // Allocate device memory
     cudaMalloc((void **)&d_a, (i) * sizeof(double));
-    cudaMalloc((void **)&d_b, (i * i) * sizeof(double));
+    cudaMalloc((void **)&d_b, (i) * sizeof(double));
+    cudaMalloc((void **)&d_b_pre, (i) * sizeof(double));
 
     cudaMemcpy(d_a, h_a, (i) * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, h_b, (i * i) * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b, (i) * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b_pre, h_b_pre, (i) * sizeof(double), cudaMemcpyHostToDevice);
     int grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // Warmup
     for (int j = 0; j < WARMUP; j++)
-      cuda_calc_w(d_a, 10, d_b, 20, i - 1, i, grid_size, BLOCK_SIZE);
+      cuda_calc_w(d_a, 10, d_b, d_b_pre, 20, i, grid_size, BLOCK_SIZE);
 
     cudaDeviceSynchronize();
 
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      cuda_calc_w(d_a, 10, d_b, 20, i - 1, i, grid_size, BLOCK_SIZE);
+      cuda_calc_w(d_a, 10, d_b, d_b_pre, 20, i, grid_size, BLOCK_SIZE);
     cudaDeviceSynchronize();
     t = clock() - t;
 
     double *out = (double *)calloc(i, sizeof(double));
-    serial_calc_w(h_a, 10, h_b, 20, i - 1, i);
+    serial_calc_w(h_a, 10, h_b, h_b_pre, 20, i);
 
-    cudaMemcpy(out, d_b, i * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(out, d_a, i * sizeof(double), cudaMemcpyDeviceToHost);
     for (int k = 0; k < i; k++) {
-      assert(fabs(h_b[k] - out[k]) < EPS);
+      assert(fabs(h_a[k] - out[k]) < EPS);
     }
 
-    cudaFree(d_a), cudaFree(d_b);
+    cudaFree(d_a), cudaFree(d_b), cudaFree(d_b_pre);
     fprintf(fp, "%s,%s,%u,%u,%e\n", "calc_w", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
     tfree(&h_a);
     tfree(&h_b);
+    tfree(&h_b_pre);
     tfree(&out);
   }
   fclose(fp);
@@ -301,7 +305,7 @@ void spmv_bench() {
     create_lap(lap, i, 100);
     lap_to_csr(lap, i, i, &row_ptrs, &columns, &vals, &val_count);
     h_orth_vec = create_host_vec(i);
-    double *d_vals, *d_orth_mtx, *d_orth_vec, *d_w_vec;
+    double *d_vals, *d_orth_vec, *d_w_vec;
     int *d_row_ptrs, *d_columns;
 
     // Allocate device memory

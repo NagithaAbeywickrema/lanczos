@@ -44,10 +44,9 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
 
 #pragma nomp init(argc, argv)
 
-#pragma nomp update(to                                                         \
-                    : row_ptrs[0, size + 1], columns[0, val_count],            \
-                      vals[0, val_count], orth_vec_pre[0, size],               \
-                      w_vec[0, size])
+#pragma nomp update(to : row_ptrs[0, size + 1], columns[0, val_count],         \
+                        vals[0, val_count], orth_vec_pre[0, size],             \
+                        w_vec[0, size])
 
   // Warm up runs
   for (int k = 0; k < 10; k++)
@@ -64,10 +63,9 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
-#pragma nomp update(free                                                       \
-                    : row_ptrs[0, size + 1], columns[0, val_count],            \
-                      vals[0, val_count], orth_vec_pre[0, size],               \
-                      w_vec[0, size], orth_vec[0, size])
+#pragma nomp update(free : row_ptrs[0, size + 1], columns[0, val_count],       \
+                        vals[0, val_count], orth_vec_pre[0, size],             \
+                        w_vec[0, size], orth_vec[0, size])
 
 #pragma nomp finalize
 
