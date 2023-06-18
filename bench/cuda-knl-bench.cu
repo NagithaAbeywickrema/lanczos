@@ -2,7 +2,7 @@
 
 void vec_sclr_mul_bench() {
   FILE *fp = open_file("lanczos_vec_sclr_mul_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -46,7 +46,7 @@ void vec_sclr_mul_bench() {
 
 void vec_sclr_div_bench() {
   FILE *fp = open_file("lanczos_vec_sclr_div_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -90,7 +90,7 @@ void vec_sclr_div_bench() {
 
 void calc_w_bench() {
   FILE *fp = open_file("lanczos_calc_w_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
     double *h_b_pre = create_host_vec(i);
@@ -139,7 +139,7 @@ void calc_w_bench() {
 
 void vec_norm_bench() {
   FILE *fp = open_file("lanczos_vec_norm_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *d_a;
 
@@ -173,12 +173,13 @@ void vec_norm_bench() {
 }
 
 void vec_dot_bench() {
-  FILE *fp = open_file("lanczos_vec_dot_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  FILE *fp = open_file("lanczos_vec_dot_without_d2d_data");
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
-    double *d_a, *d_b;
+    double *d_a, *d_b, *d_result;
     double out;
+    int shared_data_size = BLOCK_SIZE * sizeof(double);
     cudaMalloc((void **)&d_a, i * sizeof(double));
     cudaMemcpy(d_a, h_a, i * sizeof(double), cudaMemcpyHostToDevice);
 
@@ -186,26 +187,33 @@ void vec_dot_bench() {
     cudaMemcpy(d_b, h_b, i * sizeof(double), cudaMemcpyHostToDevice);
 
     int grid_size = (i + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    cudaMalloc((void **)&d_result, grid_size * sizeof(double));
 
     // Warmup runs
     for (int j = 0; j < WARMUP; j++)
-      cuda_vec_dot(d_a, d_b, i, grid_size, BLOCK_SIZE);
+      cuda_vec_dot_without_d2h(d_a, d_b, i, shared_data_size, d_result,
+                               grid_size, BLOCK_SIZE);
+    cudaDeviceSynchronize();
 
     // Measure time
     clock_t t = clock();
     for (int j = 0; j < TRAILS; j++)
-      out = cuda_vec_dot(d_a, d_b, i, grid_size, BLOCK_SIZE);
+      cuda_vec_dot_without_d2h(d_a, d_b, i, shared_data_size, d_result,
+                               grid_size, BLOCK_SIZE);
+    cudaDeviceSynchronize();
+
     t = clock() - t;
 
-    double dot = serial_vec_dot(h_a, h_b, i);
+    // double dot = serial_vec_dot(h_a, h_b, i);
 
-    assert((fabs(dot - out) / i) < EPS);
+    // assert((fabs(dot - out) / i) < EPS);
 
-    fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-dot", "cuda", 32, i,
+    fprintf(fp, "%s,%s,%u,%u,%e\n", "vec-dot-without-d2h", "cuda", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 
     cudaFree(d_a);
     cudaFree(d_b);
+    cudaFree(d_result);
     tfree(&h_a);
     tfree(&h_b);
   }
@@ -256,7 +264,7 @@ void mtx_col_copy_bench() {
 
 void create_roofline() {
   FILE *fp = open_file("roofline_data");
-  for (int i = 1e4; i < 1e7; i = inc(i)) {
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
 
     double *d_a, *d_b;
@@ -298,11 +306,11 @@ void create_roofline() {
 
 void spmv_bench() {
   FILE *fp = open_file("lanczos_spmv_data");
-  for (int i = 1e2; i < 3e4; i = inc(i)) {
+  for (int i = 1e3; i < 1e5; i = inc(i)) {
     double *lap, *vals, *h_orth_vec;
     int *row_ptrs, *columns, val_count;
     lap = (double *)calloc(i * i, sizeof(double));
-    create_lap(lap, i, 100);
+    create_lap(lap, i, 10000);
     lap_to_csr(lap, i, i, &row_ptrs, &columns, &vals, &val_count);
     h_orth_vec = create_host_vec(i);
     double *d_vals, *d_orth_vec, *d_w_vec;
@@ -352,7 +360,7 @@ void spmv_bench() {
     cudaFree(d_row_ptrs), cudaFree(d_columns), cudaFree(d_vals),
         cudaFree(d_orth_vec), cudaFree(d_w_vec);
 
-    fprintf(fp, "%s,%s,%u,%u,%e,%u\n", "spmv", "cuda", 32, i,
+    fprintf(fp, "%s,%s,%u,%u,%e,%u\n", "spmv", "cuda_new", 32, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS), val_count);
 
     tfree(&lap);
@@ -367,11 +375,11 @@ void spmv_bench() {
 }
 
 void lanczos_bench(int argc, char *argv[]) {
-  vec_sclr_mul_bench();
-  vec_sclr_div_bench();
-  calc_w_bench();
-  vec_norm_bench();
-  vec_dot_bench();
-  create_roofline();
+  // vec_sclr_mul_bench();
+  // vec_sclr_div_bench();
+  // calc_w_bench();
+  // // vec_norm_bench();
+  // vec_dot_bench();
+  // create_roofline();
   spmv_bench();
 }

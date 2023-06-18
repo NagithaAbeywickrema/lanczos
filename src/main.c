@@ -1,15 +1,15 @@
 #include "lanczos.h"
 #include "matrix-util.h"
-
+#include "print-helper.h"
 #if defined(ENABLE_BENCH)
 #include "../bench/bench.h"
 #endif
 
 int main(int argc, char *argv[]) {
-  char *file_name =
-      (argc > 1 ? argv[1] : "../data/sparse-matrices/small-test.mtx");
-  int size = 10;             // (argc > 2 ? atoi(argv[2]) : 10);
-  int do_read_from_file = 0; //(argc > 3 ? atoi(argv[3]) : 1);
+  char *file_name = "../data/sparse-matrices/usroads.mtx";
+  // (argc > 1 ? argv[1] : "../data/sparse-matrices/dictionary28.mtx");
+  int size = 1e4;            // (argc > 2 ? atoi(argv[2]) : 10);
+  int do_read_from_file = 1; //(argc > 3 ? atoi(argv[3]) : 1);
 
   // Create Laplacian matrix
   int *row_ptrs, *columns, val_count;
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   if (do_read_from_file > 0) {
     mm_to_csr(file_name, &row_ptrs, &columns, &vals, &size, &size, &val_count);
   } else {
-    create_lap(lap, size, 10);
+    create_lap(lap, size, 100000);
     lap_to_csr(lap, size, size, &row_ptrs, &columns, &vals, &val_count);
   }
   int m = size;
@@ -30,9 +30,16 @@ int main(int argc, char *argv[]) {
 #if defined(ENABLE_BENCH)
   lanczos_bench(argc, argv);
 #else
-  lanczos(row_ptrs, columns, vals, val_count, size, m, eigvals, eigvecs, argc,
-          argv);
-  print_eigen_vals(eigvals, size);
+  time_data vec_norm = {0, 0}, vec_dot = {0, 0}, vec_sclr_mul = {0, 0},
+            vec_copy = {0, 0}, spmv = {0, 0}, calc_w = {0, 0},
+            calc_w_init = {0, 0};
+  time_struct time_measure = {&vec_norm, &vec_dot, &vec_sclr_mul, &vec_copy,
+                              &spmv,     &calc_w,  &calc_w_init};
+
+  lanczos(row_ptrs, columns, vals, val_count, size, m, eigvals, eigvecs,
+          &time_measure, argc, argv);
+  // print_eigen_vals(eigvals, size);
+  print_kernel_time(&time_measure);
 #endif
 
   free(lap), free(eigvals), free(eigvecs), free(row_ptrs), free(columns),

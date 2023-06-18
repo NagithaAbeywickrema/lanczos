@@ -62,6 +62,9 @@ void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_vec,
                  int block_size);
 void cuda_d2d_mem_cpy(double *a, double *b, int size, int grid_size,
                       int block_size);
+void cuda_vec_dot_without_d2h(double *d_a_vec, double *d_b_vec, int size,
+                              int shared_data_size, double *d_result,
+                              int grid_size, int block_size);
 
 #if defined(ENABLE_SYCL)
 

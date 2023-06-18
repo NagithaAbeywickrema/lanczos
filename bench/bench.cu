@@ -11,7 +11,7 @@ double *create_host_vec(int size) {
 }
 
 int inc(int i) {
-  return (int)(1.01 * i);
+  return (int)(1.1 * i);
   if (i < 1000)
     return i + 1;
   else

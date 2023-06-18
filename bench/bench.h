@@ -22,11 +22,11 @@ FILE *open_file(char *suffix);
 
 void lanczos_bench(int argc, char *argv[]);
 
-void vec_sclr_mul_bench();
-void vec_sclr_div_bench();
-void calc_w_bench();
-void vec_norm_bench();
-void vec_dot_bench();
-void mtx_col_copy_bench();
-void create_roofline();
-void spmv_bench();
+// void vec_sclr_mul_bench();
+// void vec_sclr_div_bench();
+// void calc_w_bench();
+// void vec_norm_bench();
+// void vec_dot_bench();
+// void mtx_col_copy_bench();
+// void create_roofline();
+// void spmv_bench();

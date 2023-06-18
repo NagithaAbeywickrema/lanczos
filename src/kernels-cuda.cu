@@ -138,6 +138,13 @@ double cuda_vec_dot(double *d_a_vec, double *d_b_vec, int size, int grid_size,
   return result;
 }
 
+void cuda_vec_dot_without_d2h(double *d_a_vec, double *d_b_vec, int size,
+                              int shared_data_size, double *d_result,
+                              int grid_size, int block_size) {
+  cuda_vec_dot_knl<<<grid_size, block_size, shared_data_size>>>(
+      d_a_vec, d_b_vec, d_result, size);
+}
+
 double cuda_vec_norm(double *d_a_vec, int size, int grid_size, int block_size) {
   double sum_of_prod =
       cuda_vec_dot(d_a_vec, d_a_vec, size, grid_size, block_size);

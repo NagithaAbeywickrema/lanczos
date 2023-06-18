@@ -7,7 +7,92 @@
 void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
                   double *alpha, double *beta, double *d_w_vec, double *w_vec,
                   double *d_orth_vec, double *orth_vec, double *d_orth_vec_pre,
-                  int m, int size) {
+                  int m, int size, time_struct *time_measure) {
+  cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
+  int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  clock_t t;
+  for (int i = 0; i < m; i++) {
+    if (i > 0) {
+      t = clock();
+      beta[i] = cuda_vec_norm(d_w_vec, size, grid_size, BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->vec_norm->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->vec_norm->no_of_itt += 1;
+
+      t = clock();
+      cuda_vec_copy(d_orth_vec, d_orth_vec_pre, size, grid_size, BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->vec_copy->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->vec_copy->no_of_itt += 1;
+
+    } else
+      beta[i] = 0;
+
+    if (fabs(beta[i] - 0) > 1e-8) {
+      t = clock();
+      cuda_vec_sclr_mul(d_w_vec, d_orth_vec, 1 / beta[i], size, grid_size,
+                        BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->vec_sclr_mul->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->vec_sclr_mul->no_of_itt += 1;
+
+    } else {
+
+      for (int i = 0; i < size; i++)
+        orth_vec[i] = (double)rand() / (double)(RAND_MAX / MAX);
+      cudaMemcpy(d_orth_vec, orth_vec, (size) * sizeof(double),
+                 cudaMemcpyHostToDevice);
+
+      t = clock();
+      double norm_val = cuda_vec_norm(d_orth_vec, size, grid_size, BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->vec_norm->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->vec_norm->no_of_itt += 1;
+
+      t = clock();
+      cuda_vec_sclr_mul(d_orth_vec, d_orth_vec, 1 / norm_val, size, grid_size,
+                        BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->vec_sclr_mul->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->vec_sclr_mul->no_of_itt += 1;
+    }
+
+    t = clock();
+    cuda_spmv(d_row_ptrs, d_columns, d_vals, d_orth_vec, d_w_vec, size, size,
+              grid_size, BLOCK_SIZE);
+
+    t = clock() - t;
+    time_measure->spmv->time += (double)t / (CLOCKS_PER_SEC);
+    time_measure->spmv->no_of_itt += 1;
+
+    t = clock();
+    alpha[i] = cuda_vec_dot(d_orth_vec, d_w_vec, size, grid_size, BLOCK_SIZE);
+    t = clock() - t;
+    time_measure->vec_dot->time += (double)t / (CLOCKS_PER_SEC);
+    time_measure->vec_dot->no_of_itt += 1;
+
+    if (i == 0) {
+      t = clock();
+      cuda_calc_w_init(d_w_vec, alpha[i], d_orth_vec, size, grid_size,
+                       BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->calc_w_init->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->calc_w_init->no_of_itt += 1;
+    } else {
+      t = clock();
+      cuda_calc_w(d_w_vec, alpha[i], d_orth_vec, d_orth_vec_pre, beta[i], size,
+                  grid_size, BLOCK_SIZE);
+      t = clock() - t;
+      time_measure->calc_w->time += (double)t / (CLOCKS_PER_SEC);
+      time_measure->calc_w->no_of_itt += 1;
+    }
+  }
+}
+
+void lanczos_algo_warmup(int *d_row_ptrs, int *d_columns, double *d_vals,
+                         double *alpha, double *beta, double *d_w_vec,
+                         double *w_vec, double *d_orth_vec, double *orth_vec,
+                         double *d_orth_vec_pre, int m, int size) {
   cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
   int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
@@ -47,7 +132,8 @@ void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
 }
 
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
-             int m, double *eigvals, double *eigvecs, int argc, char *argv[]) {
+             int m, double *eigvals, double *eigvecs, time_struct *time_measure,
+             int argc, char *argv[]) {
   // Allocate host memory
   double *alpha = (double *)calloc(m, sizeof(double));
   double *beta = (double *)calloc(m, sizeof(double));
@@ -76,19 +162,19 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
 
   // Warm up runs
   for (int k = 0; k < 10; k++)
-    lanczos_algo(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec, w_vec,
-                 d_orth_vec, orth_vec, d_orth_vec_pre, m, size);
+    lanczos_algo_warmup(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec,
+                        w_vec, d_orth_vec, orth_vec, d_orth_vec_pre, m, size);
 
   // Measure time
   clock_t t = clock();
   for (int k = 0; k < TRIALS; k++)
     lanczos_algo(d_row_ptrs, d_columns, d_vals, alpha, beta, d_w_vec, w_vec,
-                 d_orth_vec, orth_vec, d_orth_vec_pre, m, size);
+                 d_orth_vec, orth_vec, d_orth_vec_pre, m, size, time_measure);
   t = clock() - t;
 
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 
-  tqli(eigvecs, eigvals, size, alpha, beta, 0);
+  // tqli(eigvecs, eigvals, size, alpha, beta, 0);
 
   // Free device memory
   cudaFree(d_row_ptrs), cudaFree(d_columns), cudaFree(d_vals),

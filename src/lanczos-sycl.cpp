@@ -51,7 +51,8 @@ void lanczos_algo(sycl::buffer<int> a_row_buf, sycl::buffer<int> a_columns_buf,
 }
 
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
-             int m, double *eigvals, double *eigvecs, int argc, char *argv[]) {
+             int m, double *eigvals, double *eigvecs, time_struct *time_measure,
+             int argc, char *argv[]) {
   auto sycl_platforms = sycl::platform().get_platforms();
   auto sycl_pdevices = sycl_platforms[2].get_devices();
   sycl::device device = sycl_pdevices[0];

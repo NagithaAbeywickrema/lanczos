@@ -53,7 +53,8 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
 }
 
 void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
-             int m, double *eigvals, double *eigvecs, int argc, char *argv[]) {
+             int m, double *eigvals, double *eigvecs, time_struct *time_measure,
+             int argc, char *argv[]) {
 
   double *orth_vec_pre = (double *)calloc(size, sizeof(double));
   double *alpha = (double *)calloc(m, sizeof(double));
