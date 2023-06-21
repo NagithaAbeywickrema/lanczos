@@ -20,6 +20,7 @@ void serial_calc_w_init(double *w_vec, double alpha, double *orth_vec,
 void serial_calc_w(double *w_vec, double alpha, double *orth_vec,
                    double *orth_vec_pre, double beta, int size);
 void serial_vec_sclr_mul(double *a_vec, double *out_vec, double sclr, int size);
+void serial_vec_add(double *a_vec, double *b_vec, double *out_vec, int size);
 
 // Parallelized functions of Lanczos routine implemented using Nomp.
 double nomp_vec_dot(double *a_vec, double *b_vec, int size);
@@ -65,6 +66,8 @@ void cuda_d2d_mem_cpy(double *a, double *b, int size, int grid_size,
 void cuda_vec_dot_without_d2h(double *d_a_vec, double *d_b_vec, int size,
                               int shared_data_size, double *d_result,
                               int grid_size, int block_size);
+void cuda_vec_add(double *a_vec, double *b_vec, double *out_vec, int size,
+                  int grid_size, int block_size);
 
 #if defined(ENABLE_SYCL)
 

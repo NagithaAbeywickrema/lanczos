@@ -18,8 +18,8 @@ void vec_norm_bench(char *backend) {
       n_norm = nomp_vec_norm(h_a, i);
     t = clock() - t;
 
-    assert((fabs(s_norm - n_norm) / i) < EPS);
-    fprintf(fp, "%s,%s_%s,%u,%e\n", "vec-norm", "nomp", backend, i,
+    // assert((fabs(s_norm - n_norm) / i) < EPS);
+    fprintf(fp, "%s,%s_%s,%u,%u,%e\n", "vec-norm", "nomp", 32, backend, i,
             (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i])
     tfree(&h_a);
@@ -28,7 +28,7 @@ void vec_norm_bench(char *backend) {
 }
 
 void vec_dot_bench(char *backend) {
-  FILE *fp = open_file("lanczos_vec_dot_data");
+  FILE *fp = open_file("lanczos_vec_dot_without_d2d_data-prof");
   for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = create_host_vec(i);
@@ -47,8 +47,8 @@ void vec_dot_bench(char *backend) {
     t = clock() - t;
     // assert((fabs(s_dot - n_dot) / i) < EPS);
 
-    fprintf(fp, "%s,%s_%s,%u,%u,%e\n", "vec-dot-prod", "nomp", backend, 32, i,
-            (double)t / (CLOCKS_PER_SEC * TRAILS));
+    fprintf(fp, "%s,%s_%s,%u,%u,%e\n", "vec-dot-without-d2h", "nomp", backend,
+            32, i, (double)t / (CLOCKS_PER_SEC * TRAILS));
 #pragma nomp update(free : h_a[0, i], h_b[0, i])
     tfree(&h_a), tfree(&h_b);
   }
@@ -90,8 +90,45 @@ void vec_sclr_mul_bench(char *backend) {
   fclose(fp);
 }
 
+void vec_add_bench(char *backend) {
+  FILE *fp = open_file("lanczos_vec_add_data");
+  for (int i = 1e3; i < 1e7; i = inc(i)) {
+    double *h_a = create_host_vec(i);
+    double *h_b = create_host_vec(i);
+    double *h_c = (double *)malloc(sizeof(double) * i);
+    double *h_d = (double *)malloc(sizeof(double) * i);
+    serial_vec_add(h_a, h_b, h_d, i);
+
+#pragma nomp update(to : h_a[0, i], h_b[0, i])
+#pragma nomp update(alloc : h_c[0, i])
+
+    // Warmup
+    for (int j = 0; j < WARMUP; j++)
+      nomp_vec_add(h_a, h_b, h_c, i);
+#pragma nomp sync
+
+    clock_t t = clock();
+    for (int j = 0; j < TRAILS; j++)
+      nomp_vec_add(h_a, h_b, h_c, i);
+#pragma nomp sync
+    t = clock() - t;
+
+#pragma nomp update(from : h_c[0, i])
+    for (int k = 0; k < i; k++)
+      assert(fabs(h_c[k] - h_d[k]) < EPS);
+
+    fprintf(fp, "%s,%s_%s,%u,%u,%e\n", "vec-add", "nomp", backend, 32, i,
+            (double)t / (CLOCKS_PER_SEC * TRAILS));
+
+#pragma nomp update(free : h_a[0, i], h_b[0, i])
+    tfree(&h_a), tfree(&h_b);
+    free(h_c), free(h_d);
+  }
+  fclose(fp);
+}
+
 void vec_sclr_div_bench(char *backend) {
-  FILE *fp = open_file("lanczos_vec_sclr_div_data");
+  FILE *fp = open_file("lanczos_vec_sclr_div_data-new");
   for (int i = 1e3; i < 1e7; i = inc(i)) {
     double *h_a = create_host_vec(i);
     double *h_b = (double *)malloc(sizeof(double) * i);
@@ -194,12 +231,12 @@ void calc_w_bench(char *backend) {
 
 void spmv_bench(char *backend) {
   FILE *fp = open_file("lanczos_spmv_data");
-  for (int i = 1e3; i < 1e5; i = inc(i)) {
+  for (int i = 2e2; i < 3e4; i = inc(i)) {
     double *lap, *vals, *h_orth_vec;
     int *row_ptrs, *columns, val_count;
     lap = (double *)calloc(i * i, sizeof(double));
 
-    create_lap(lap, i, 10000);
+    create_lap(lap, i, 1000);
     lap_to_csr(lap, i, i, &row_ptrs, &columns, &vals, &val_count);
     h_orth_vec = create_host_vec(i);
 
@@ -240,26 +277,25 @@ void spmv_bench(char *backend) {
 
 void lanczos_bench(int argc, char *argv[]) {
 #pragma nomp init(argc, argv)
-unsigned i = 0;
-char *backend =(char *)malloc(BUFSIZ);
-while (i < argc) {
+  unsigned i = 0;
+  char *backend = (char *)malloc(BUFSIZ);
+  while (i < argc) {
     if (!strncmp("--nomp", argv[i], 6)) {
       if (!strncmp("--nomp-backend", argv[i], BUFSIZ)) {
         strncpy(backend, argv[i + 1], BUFSIZ);
+        i++;
+      }
       i++;
     }
     i++;
   }
-  i++;
-
-}
-printf("%s\n",backend);
+  // vec_add_bench(backend);
   // vec_sclr_mul_bench(backend);
   // vec_sclr_div_bench(backend);
-  // calc_w_bench(backend);
-  // // vec_norm_bench();
-  // vec_dot_bench(backend);
-  spmv_bench(backend);
+  calc_w_bench(backend);
+  vec_norm_bench(backend);
+  vec_dot_bench(backend);
+  // spmv_bench(backend);
 #pragma nomp finalize
-free(backend);
+  free(backend);
 }

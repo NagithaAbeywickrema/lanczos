@@ -4,11 +4,12 @@
 
 void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
                   double *beta, double *w_vec, double *orth_vec,
-                  double *orth_vec_pre, int m, int size, time_struct *time_measure) {
+                  double *orth_vec_pre, int m, int size,
+                  time_struct *time_measure) {
   clock_t t;
-  for (int i = 0; i < m; i++) {
+  for (int i = 0; i < 10; i++) {
     if (i > 0) {
-       t = clock();
+      t = clock();
       beta[i] = nomp_vec_norm(w_vec, size);
       t = clock() - t;
       time_measure->vec_norm->time += (double)t / (CLOCKS_PER_SEC);
@@ -73,10 +74,11 @@ void lanczos_algo(int *row_ptrs, int *columns, double *vals, double *alpha,
   }
 }
 
-void lanczos_algo_warmup(int *row_ptrs, int *columns, double *vals, double *alpha,
-                  double *beta, double *w_vec, double *orth_vec,
-                  double *orth_vec_pre, int m, int size) {
-  for (int i = 0; i < m; i++) {
+void lanczos_algo_warmup(int *row_ptrs, int *columns, double *vals,
+                         double *alpha, double *beta, double *w_vec,
+                         double *orth_vec, double *orth_vec_pre, int m,
+                         int size) {
+  for (int i = 0; i < 10; i++) {
     if (i > 0) {
       beta[i] = nomp_vec_norm(w_vec, size);
       nomp_vec_copy(orth_vec, orth_vec_pre, size);
@@ -123,13 +125,13 @@ void lanczos(int *row_ptrs, int *columns, double *vals, int val_count, int size,
   // Warm up runs
   for (int k = 0; k < 10; k++)
     lanczos_algo_warmup(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec,
-                 orth_vec_pre, m, size);
+                        orth_vec_pre, m, size);
 
   // Measure time
   clock_t t = clock();
   for (int k = 0; k < TRIALS; k++)
     lanczos_algo(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec,
-                 orth_vec_pre, m, size,time_measure);
+                 orth_vec_pre, m, size, time_measure);
   t = clock() - t;
   printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 

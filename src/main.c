@@ -6,7 +6,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  char *file_name = "../data/sparse-matrices/usroads.mtx";
+  char *file_name = "../data/sparse-matrices/delaunay_n13.mtx";
   // (argc > 1 ? argv[1] : "../data/sparse-matrices/dictionary28.mtx");
   int size = 1e4;            // (argc > 2 ? atoi(argv[2]) : 10);
   int do_read_from_file = 1; //(argc > 3 ? atoi(argv[3]) : 1);

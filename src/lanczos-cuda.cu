@@ -2,7 +2,7 @@
 #include "lanczos-aux.h"
 #include "lanczos.h"
 
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 512
 
 void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
                   double *alpha, double *beta, double *d_w_vec, double *w_vec,
@@ -11,7 +11,7 @@ void lanczos_algo(int *d_row_ptrs, int *d_columns, double *d_vals,
   cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
   int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
   clock_t t;
-  for (int i = 0; i < m; i++) {
+  for (int i = 0; i < 10; i++) {
     if (i > 0) {
       t = clock();
       beta[i] = cuda_vec_norm(d_w_vec, size, grid_size, BLOCK_SIZE);
@@ -96,7 +96,7 @@ void lanczos_algo_warmup(int *d_row_ptrs, int *d_columns, double *d_vals,
   cudaMemcpy(d_w_vec, w_vec, (size) * sizeof(double), cudaMemcpyHostToDevice);
   int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-  for (int i = 0; i < m; i++) {
+  for (int i = 0; i < 10; i++) {
     if (i > 0) {
       beta[i] = cuda_vec_norm(d_w_vec, size, grid_size, BLOCK_SIZE);
       cuda_vec_copy(d_orth_vec, d_orth_vec_pre, size, grid_size, BLOCK_SIZE);

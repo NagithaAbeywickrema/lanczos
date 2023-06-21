@@ -6,7 +6,7 @@
 #include <time.h>
 #define MAX 1000000
 #define EPS 1e-8
-#define TRIALS 2
+#define TRIALS 100
 
 #ifdef __cplusplus
 extern "C" {

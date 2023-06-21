@@ -1,7 +1,7 @@
 #include "kernels.h"
 #include <math.h>
 
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 512
 
 __global__ void cuda_vec_dot_knl(double *a_vec, double *b_vec, double *result,
                                  int size) {
@@ -32,6 +32,14 @@ __global__ void cuda_vec_sclr_div_knl(double *a_vec, double *out_vec,
 
   if (tid < size)
     out_vec[tid] = a_vec[tid] / sclr;
+}
+
+__global__ void cuda_vec_add_knl(double *a_vec, double *b_vec, double *out_vec,
+                                 int size) {
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (tid < size)
+    out_vec[tid] = a_vec[tid] + b_vec[tid];
 }
 
 __global__ void cuda_vec_sclr_mul_knl(double *a_vec, double *out_vec,
@@ -213,4 +221,9 @@ void cuda_calc_w(double *d_w_vec, double alpha, double *d_orth_vec,
 
   cuda_calc_w_knl<<<grid_size, block_size>>>(d_w_vec, alpha, d_orth_vec,
                                              d_orth_vec_pre, beta, size);
+}
+
+void cuda_vec_add(double *a_vec, double *b_vec, double *out_vec, int size,
+                  int grid_size, int block_size) {
+  cuda_vec_add_knl<<<grid_size, block_size>>>(a_vec, b_vec, out_vec, size);
 }
