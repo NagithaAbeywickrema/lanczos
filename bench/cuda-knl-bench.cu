@@ -420,12 +420,12 @@ void spmv_bench() {
 }
 
 void lanczos_bench(int argc, char *argv[]) {
+  create_roofline();
   // vec_sclr_mul_bench();
   // vec_sclr_div_bench();
   calc_w_bench();
   vec_norm_bench();
   vec_dot_without_d2h_bench();
-  // create_roofline();
   // spmv_bench();
   // vec_add_bench();
 }

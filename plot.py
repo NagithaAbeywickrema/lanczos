@@ -76,26 +76,18 @@ def x1(x: int) -> int:
     return x
 
 
-def plot() -> None:
+def plot(plot_graph,fun) -> None:
     fig = plt.figure(figsize=(9, 9))
     names={
-        # "lanczos_lanczos_vec_sclr_mul_data":x1,
-        #    "lanczos_lanczos_vec_sclr_div_data":x1,
-        #    "lanczos_lanczos_calc_w_data":x3,
-        #    "lanczos_lanczos_vec_dot_data":x1,
-           "lanczos_lanczos_vec_norm_data":x1,
-            # "lanczos_lanczos_vec_dot_without_d2d_data":x1,
-            # "lanczos_lanczos_vec_dot_without_d2d_data-prof":x1,
-            # "lanczos_lanczos_vec_sclr_div_data-new":x1,
+           f"{plot_graph}":fun,
            "lanczos_roofline_data":x1,
-        #    "lanczos_lanczos_spmv_data":x1
            }
     for key in names.keys():
         name=key
         J = read(f"./build/{name}.txt")
         plot_all(J, name,names[key])
 
-    plt.title("lanczos_lanczos_calc_w_data x3 Knl with roofline", fontsize=23)
+    plt.title(f"{plot_graph} Knl with roofline", fontsize=23)
     plt.xlabel("Words", fontsize=18)
     plt.ylabel("Bandwidth (GB/sec)", fontsize=18)
     plt.xscale("log", base=10)
@@ -103,13 +95,13 @@ def plot() -> None:
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.legend()
-    plt.savefig(f"with roofline lanczos_lanczos_calc_w_data-new.pdf")
+    plt.savefig(f"with roofline {plot_graph}.pdf")
     plt.close()
 
 
 if __name__ == "__main__":
     
-    # name="lanczos_roofline_data"
+    file_name="lanczos_lanczos_calc_w_data"
     # J = read(f"/home/pubudu/nomp/lanczos/build/{name}.txt")
     # plot_bnd(J, name)
-    plot()
+    plot(file_name,x3)
