@@ -1,18 +1,17 @@
 #include "kernels.h"
 #include "lanczos-aux.h"
 #include "lanczos.h"
-#include "print-helper.h"
 
-#define MAX 1000000
-#define EPS 1e-12
-
-void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
-                  double *orth_vec, double *orth_mtx, const unsigned m,
-                  const unsigned size) {
+void lanczos_algo(unsigned *row_ptrs, unsigned *columns, double *vals,
+                  double *alpha, double *beta, double *w_vec, double *orth_vec,
+                  double *orth_mtx, const unsigned m, const unsigned size) {
   for (unsigned i = 0; i < m; i++) {
-    beta[i] = serial_vec_norm(w_vec, size);
+    if (i > 0)
+      beta[i] = serial_vec_norm(w_vec, size);
+    else
+      beta[i] = 0;
 
-    if (fabs(beta[i] - 0) > 1e-8) {
+    if (fabs(beta[i] - 0) > EPS) {
       serial_vec_sclr_div(w_vec, orth_vec, beta[i], size);
     } else {
       for (unsigned i = 0; i < size; i++)
@@ -23,7 +22,7 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
 
     serial_mtx_col_copy(orth_vec, orth_mtx, i, size);
 
-    serial_mtx_vec_mul(lap, orth_vec, w_vec, size, size);
+    serial_spmv(row_ptrs, columns, vals, orth_vec, w_vec, size, size);
 
     alpha[i] = serial_vec_dot(orth_vec, w_vec, size);
 
@@ -35,7 +34,8 @@ void lanczos_algo(double *lap, double *alpha, double *beta, double *w_vec,
   }
 }
 
-void lanczos(double *lap, const unsigned size, const unsigned m,
+void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
+             const unsigned val_count, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
   // Allocate memory
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
@@ -46,15 +46,18 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
 
   // Warm up runs
   for (unsigned k = 0; k < 10; k++)
-    lanczos_algo(lap, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
+    lanczos_algo(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec,
+                 orth_mtx, m, size);
 
+  // Measure time
   clock_t t = clock();
-  lanczos_algo(lap, alpha, beta, w_vec, orth_vec, orth_mtx, m, size);
+  for (unsigned k = 0; k < TRIALS; k++)
+    lanczos_algo(row_ptrs, columns, vals, alpha, beta, w_vec, orth_vec,
+                 orth_mtx, m, size);
   t = clock() - t;
-  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
+  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  // print_eigen_vals(eigvals, size);
 
   free(orth_mtx), free(alpha), free(beta), free(orth_vec), free(w_vec);
 }

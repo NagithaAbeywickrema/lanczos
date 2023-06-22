@@ -1,14 +1,14 @@
 __kernel void mtx_sclr_div(__global double *v, __global double *w, double sclr,
                            const unsigned n) {
-  int id = get_global_id(0);
+  unsigned id = get_global_id(0);
 
   if (id < n)
     w[id] = v[id] / sclr;
 };
 
-__kernel void mtx_col_copy(__global double *v, __global double *V, int i,
-                           const unsigned n) {
-  int id = get_global_id(0);
+__kernel void mtx_col_copy(__global double *v, __global double *V,
+                           const unsigned i, const unsigned n) {
+  unsigned id = get_global_id(0);
 
   if (id < n)
     V[id + n * i] = v[id];
@@ -17,11 +17,26 @@ __kernel void mtx_col_copy(__global double *v, __global double *V, int i,
 __kernel void mtx_vec_mul(__global double *a, __global double *b,
                           __global double *c, const unsigned h_a,
                           const unsigned w_a) {
-  int id = get_global_id(0);
+  unsigned id = get_global_id(0);
   double dot = 0;
   if (id < h_a) {
-    for (int i = 0; i < w_a; i++)
+    for (unsigned i = 0; i < w_a; i++)
       dot += a[w_a * id + i] * b[i];
+    c[id] = dot;
+  }
+};
+
+__kernel void spmv(__global unsigned *a_row_ptrs, __global unsigned *a_columns,
+                   __global double *a_vals, __global double *b,
+                   __global double *c, const unsigned h_a, const unsigned w_a) {
+  unsigned id = get_global_id(0);
+  if (id < h_a) {
+    unsigned start = a_row_ptrs[id];
+    unsigned end = a_row_ptrs[id + 1];
+    double dot = 0;
+    // Add each element in the id
+    for (unsigned j = start; j < end; j++)
+      dot += a_vals[j] * b[a_columns[j]];
     c[id] = dot;
   }
 };
@@ -50,16 +65,16 @@ __kernel void vec_dot(__global double *v, __global double *w,
 };
 
 __kernel void calc_w_init(__global double *w, __global double *V, double alpha,
-                          int i, const unsigned n) {
-  int id = get_global_id(0);
+                          const unsigned i, const unsigned n) {
+  unsigned id = get_global_id(0);
 
   if (id < n)
     w[id] = w[id] - alpha * V[id + n * i];
 };
 
 __kernel void calc_w(__global double *w, __global double *V, double alpha,
-                     double beta, int i, const unsigned n) {
-  int id = get_global_id(0);
+                     double beta, const unsigned i, const unsigned n) {
+  unsigned id = get_global_id(0);
 
   if (id < n)
     w[id] = w[id] - alpha * V[id + n * i] - beta * V[id + n * (i - 1)];

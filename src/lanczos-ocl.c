@@ -1,7 +1,6 @@
 #include "kernels.h"
 #include "lanczos-aux.h"
 #include "lanczos.h"
-#include "print-helper.h"
 
 #define CL_TARGET_OPENCL_VERSION 220
 #ifdef __APPLE__
@@ -12,12 +11,11 @@
 #include <CL/cl.h>
 #endif
 
-#define MAX 10
-#define EPS 1e-12
 #define MAX_SOURCE_SIZE (0x100000)
 
 void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
-                  double *alpha, double *beta, double *orth_vec, cl_mem d_lap,
+                  double *alpha, double *beta, double *orth_vec,
+                  cl_mem d_row_ptrs, cl_mem d_columns, cl_mem d_vals,
                   cl_mem d_w_vec, cl_mem d_orth_vec, cl_mem d_orth_mtx,
                   const unsigned m, const unsigned size) {
   for (unsigned i = 0; i < m; i++) {
@@ -36,7 +34,9 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
     }
 
     ocl_mtx_col_copy(ctx, queue, prg, d_orth_vec, d_orth_mtx, i, size);
-    ocl_mtx_vec_mul(ctx, queue, prg, d_lap, d_orth_vec, d_w_vec, size, size);
+
+    ocl_spmv(ctx, queue, prg, d_row_ptrs, d_columns, d_vals, d_orth_vec,
+             d_w_vec, size, size);
     alpha[i] = ocl_vec_dot(ctx, queue, prg, d_orth_vec, d_w_vec, size);
     if (i == 0) {
       ocl_calc_w_init(ctx, queue, prg, d_w_vec, alpha[i], d_orth_mtx, i, size);
@@ -47,7 +47,8 @@ void lanczos_algo(cl_context ctx, cl_command_queue queue, cl_program prg,
   }
 }
 
-void lanczos(double *lap, const unsigned size, const unsigned m,
+void lanczos(unsigned *row_ptrs, unsigned *columns, double *vals,
+             const unsigned val_count, const unsigned size, const unsigned m,
              double *eigvals, double *eigvecs, int argc, char *argv[]) {
 
   double *orth_mtx = (double *)calloc(size * m, sizeof(double));
@@ -112,10 +113,15 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 
   // Allocate memory
-  cl_mem d_lap, d_orth_mtx, d_w_vec, d_orth_vec;
+  cl_mem d_row_ptrs, d_columns, d_vals, d_orth_mtx, d_w_vec, d_orth_vec;
 
   size_t bytes = size * size * sizeof(double);
-  d_lap = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
+  d_row_ptrs = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                              (size + 1) * sizeof(unsigned), NULL, NULL);
+  d_columns = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                             val_count * sizeof(unsigned), NULL, NULL);
+  d_vals = clCreateBuffer(context, CL_MEM_READ_ONLY, val_count * sizeof(double),
+                          NULL, NULL);
   d_orth_mtx = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, NULL);
   d_w_vec = clCreateBuffer(context, CL_MEM_READ_WRITE, size * sizeof(double),
                            NULL, NULL);
@@ -124,25 +130,34 @@ void lanczos(double *lap, const unsigned size, const unsigned m,
 
   err = clEnqueueWriteBuffer(queue, d_w_vec, CL_TRUE, 0, size * sizeof(double),
                              w_vec, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue, d_lap, CL_TRUE, 0,
-                             size * size * sizeof(double), lap, 0, NULL, NULL);
+  err = clEnqueueWriteBuffer(queue, d_row_ptrs, CL_TRUE, 0,
+                             (size + 1) * sizeof(unsigned), row_ptrs, 0, NULL,
+                             NULL);
+  err = clEnqueueWriteBuffer(queue, d_columns, CL_TRUE, 0,
+                             val_count * sizeof(unsigned), columns, 0, NULL,
+                             NULL);
+  err = clEnqueueWriteBuffer(queue, d_vals, CL_TRUE, 0,
+                             val_count * sizeof(double), vals, 0, NULL, NULL);
 
   // Warm up runs
-  for (int t = 0; t < 10; t++)
-    lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_lap, d_w_vec,
-                 d_orth_vec, d_orth_mtx, m, size);
+  for (unsigned t = 0; t < 10; t++)
+    lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
+                 d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
 
+  // Measure time
   clock_t t = clock();
-  lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_lap, d_w_vec,
-               d_orth_vec, d_orth_mtx, m, size);
+  for (unsigned k = 0; k < TRIALS; k++)
+    lanczos_algo(context, queue, program, alpha, beta, orth_vec, d_row_ptrs,
+                 d_columns, d_vals, d_w_vec, d_orth_vec, d_orth_mtx, m, size);
   t = clock() - t;
-  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC));
+  printf("size: %d, time: %e \n", size, (double)t / (CLOCKS_PER_SEC * TRIALS));
 
   tqli(eigvecs, eigvals, size, alpha, beta, 0);
-  print_eigen_vals(eigvals, size);
 
   // release OpenCL resources
-  clReleaseMemObject(d_lap);
+  clReleaseMemObject(d_row_ptrs);
+  clReleaseMemObject(d_columns);
+  clReleaseMemObject(d_vals);
   clReleaseMemObject(d_orth_mtx);
   clReleaseMemObject(d_w_vec);
   clReleaseMemObject(d_orth_vec);

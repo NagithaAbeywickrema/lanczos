@@ -56,6 +56,23 @@ __global__ void cuda_mtx_vec_mul_knl(double *a_mtx, double *b_vec,
   }
 }
 
+__global__ void cuda_spmv_knl(unsigned *a_row_ptrs, unsigned *a_columns,
+                              double *a_vals, double *b_vec, double *out_vec,
+                              const unsigned num_rows,
+                              const unsigned num_cols) {
+  const unsigned row = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row < num_rows) {
+    unsigned start = a_row_ptrs[row];
+    unsigned end = a_row_ptrs[row + 1];
+    double dot = 0;
+    // Add each element in the row
+    for (unsigned j = start; j < end; j++)
+      dot += a_vals[j] * b_vec[a_columns[j]];
+    out_vec[row] = dot;
+  }
+}
+
 __global__ void cuda_calc_w_init_knl(double *w_vec, const double alpha,
                                      double *orth_mtx, const unsigned col_index,
                                      const unsigned size) {
@@ -135,6 +152,18 @@ void cuda_mtx_vec_mul(double *d_a_mtx, double *d_b_vec, double *d_out_vec,
 
   cuda_mtx_vec_mul_knl<<<grid_size, BLOCK_SIZE>>>(d_a_mtx, d_b_vec, d_out_vec,
                                                   num_rows, num_cols);
+
+  cudaDeviceSynchronize();
+}
+
+void cuda_spmv(unsigned *d_a_row_ptrs, unsigned *d_a_columns, double *d_a_vals,
+               double *d_b_vec, double *d_out_vec, const unsigned num_rows,
+               const unsigned num_cols) {
+  const unsigned grid_size = (num_rows + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+  cuda_spmv_knl<<<grid_size, BLOCK_SIZE>>>(d_a_row_ptrs, d_a_columns, d_a_vals,
+                                           d_b_vec, d_out_vec, num_rows,
+                                           num_cols);
 
   cudaDeviceSynchronize();
 }
